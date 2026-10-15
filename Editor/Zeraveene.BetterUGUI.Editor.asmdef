@@ -1,0 +1,21 @@
+{
+    "name": "Zeraveene.BetterUGUI.Editor",
+    "rootNamespace": "",
+    "references": [
+        "Zeraveene.BetterUGUI",
+        "UnityEngine.UI",
+        "UnityEditor.UI",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

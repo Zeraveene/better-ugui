@@ -1,0 +1,6 @@
+{
+    "name": "Zeraveene.BetterUGUI.Editor.Tests",
+    "references": ["Zeraveene.BetterUGUI", "Zeraveene.BetterUGUI.Editor", "UnityEngine.UI"],
+    "includePlatforms": ["Editor"],
+    "optionalUnityReferences": ["TestAssemblies"]
+}
