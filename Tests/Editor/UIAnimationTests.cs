@@ -45,7 +45,7 @@ namespace Zeraveene.BetterUGUI.Tests
             Assert.That(UIAnimationRunner.ActiveCount, Is.Zero);
         }
 
-        private UIAnimation Record(float duration = 1f) => new UIAnimation
+        private Animation.UIAnimation Record(float duration = 1f) => new Animation.UIAnimation
         {
             Owner = probe, Rect = rect, Group = group,
             Properties = UIAnimationProperties.Position | UIAnimationProperties.Scale | UIAnimationProperties.Alpha,
@@ -173,7 +173,7 @@ namespace Zeraveene.BetterUGUI.Tests
         public void ReservedStartAndUpdateAllocateNoManagedMemory()
         {
             UIAnimationRunner.Reserve(256);
-            UIAnimation record = Record(0.01f);
+            Animation.UIAnimation record = Record(0.01f);
             record.Receiver = null;
             for (int i = 0; i < 20; i++)
             {

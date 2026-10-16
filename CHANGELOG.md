@@ -3,6 +3,12 @@
 All notable changes to this package are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the package uses [Semantic Versioning](https://semver.org/).
 
+## [4.2.1] - 2026-10-16
+
+### Added
+- Simple `Zeraveene.BetterUGUI.UIAnimation` component with optional Fade and Scale foldouts, independent durations, OutQuad easing, and bool-returning Play/Stop methods.
+- Inspector Play/Stop preview in Edit Mode, restoring original alpha and scale when stopped or deselected. Fade uses CanvasGroup first, then Image.
+
 ## [4.2.0] - 2026-10-16
 
 ### Added

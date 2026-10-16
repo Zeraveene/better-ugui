@@ -14,9 +14,9 @@ Canvas particle rendering and Mob Sakai SoftMaskForUGUI 3.6.5 are included. See 
 
 Pick one:
 
-- **Tarball:** `Window > Package Manager > + > Install package from tarball...` and pick `com.zeraveene.better-ugui-4.2.0.tgz`.
+- **Tarball:** `Window > Package Manager > + > Install package from tarball...` and pick `com.zeraveene.better-ugui-4.2.1.tgz`.
 - **Embedded copy:** copy the `com.zeraveene.better-ugui` folder into your project's `Packages/` folder. Unity picks it up without a manifest entry.
-- **Git URL (recommended):** `Window > Package Manager > + > Install package from git URL...`, then enter `https://github.com/zeraveene/better-ugui.git#v4.2.0`. Private repositories require Git authentication on each machine.
+- **Git URL (recommended):** `Window > Package Manager > + > Install package from git URL...`, then enter `https://github.com/zeraveene/better-ugui.git#v4.2.1`. Private repositories require Git authentication on each machine.
 
 Remove any older copy of these scripts (for example from `Assets/_ProjectData/Scripts/UI/` or an older `UI-Tools.unitypackage` import) before installing. The scripts keep their original GUIDs, so existing scenes and prefabs rebind to the package automatically, but two copies of the same classes will not compile.
 

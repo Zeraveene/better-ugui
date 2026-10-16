@@ -16,7 +16,7 @@ Reusable extensions for Unity uGUI by Zeraveene.
 In Unity, open **Window > Package Manager > + > Install package from git URL** and enter:
 
 ```text
-https://github.com/zeraveene/better-ugui.git#v4.2.0
+https://github.com/zeraveene/better-ugui.git#v4.2.1
 ```
 
 Requires Unity 6000.0+ and uGUI 2.0.0. Private repository access requires Git authentication on each machine. Commit your project's `Packages/manifest.json` and `Packages/packages-lock.json` so other machines can restore the same package version.
@@ -45,3 +45,9 @@ See [effects and particles](Documentation~/EffectsAndParticles.md) and [third-pa
 ## Development
 
 This repository contains the UPM package at its root; it is not a Unity project. Develop and test it as an embedded package in a Unity test project under `Packages/com.zeraveene.better-ugui/`. Preserve all supplied `.meta` files when copying between the package repository and the test project. Commit and tag the package repository to publish a version that consuming projects can install.
+
+### Simple UI animation
+
+Add **UI > Better uGUI > UI Animation** to a UI object. Enable Fade and/or Scale in their foldout checkboxes, set From/To and Duration, then press Play to preview. Fade requires a CanvasGroup or Image on the same object (CanvasGroup takes priority). Defaults: fade 1 → 0, uniform scale 1 → 1.3, 0.3 seconds each, OutQuad easing. Channels play together with independent durations.
+
+Call `bool Play()` to restart from the configured values and `bool Stop()` to stop at the current values. Play returns false when disabled or no channel can run; Stop returns whether it interrupted playback. Playback is explicit, with no events or automatic playback. Edit Mode Stop/deselect restores the original values.
