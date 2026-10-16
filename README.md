@@ -16,7 +16,7 @@ Reusable extensions for Unity uGUI by Zeraveene.
 In Unity, open **Window > Package Manager > + > Install package from git URL** and enter:
 
 ```text
-https://github.com/zeraveene/better-ugui.git#v4.2.2
+https://github.com/zeraveene/better-ugui.git#v4.2.3
 ```
 
 Requires Unity 6000.0+ and uGUI 2.0.0. Private repository access requires Git authentication on each machine. Commit your project's `Packages/manifest.json` and `Packages/packages-lock.json` so other machines can restore the same package version.
@@ -54,4 +54,6 @@ Call `bool Play()` to restart from the configured values and `bool Stop()` to st
 
 ### UI pulse
 
-Add **UI > Better uGUI > UI Pulse** for a repeating uniform scale pulse. Defaults: From 1, To 0.5, Duration 0.3 seconds per direction, InOutQuad easing with yoyo playback. Enable **Always Play** to start whenever the component is enabled in Play Mode, or call `bool Play()` / `bool Stop()` explicitly. Play restarts from From; Stop holds the current scale. The inspector Play/Stop buttons also preview in Edit Mode and restore the original scale on stop or deselection.
+Add **UI > Better uGUI > UI Pulse** for a repeating pulse. Choose **Alpha** (default) or **Scale** from Mode. Alpha automatically uses a CanvasGroup if present, otherwise the same object's `UnityEngine.UI.Graphic`, including procedural shapes, procedural images, standard Images and text. A CanvasGroup is optional. Scale animates uniform local scale.
+
+Defaults: From 1, To 0.5, Duration 0.3 seconds per direction, InOutQuad easing with yoyo playback. Enable **Always Play** to start whenever the component is enabled in Play Mode, or call `bool Play()` / `bool Stop()` explicitly. Play restarts from From; Stop holds the current value. The inspector Play/Stop buttons also preview in Edit Mode and restore the original alpha and scale on stop or deselection.

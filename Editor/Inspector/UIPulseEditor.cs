@@ -10,11 +10,18 @@ namespace Zeraveene.BetterUGUI.Editor
         private bool preview;
         private double started;
         private Vector3 originalScale;
+        private CanvasGroup group;
+        private UnityEngine.UI.Graphic graphic;
+        private float originalAlpha;
+        private Color originalColor;
 
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
             var animation = (AnimationComponent)target;
+            if (serializedObject.FindProperty("mode").enumValueIndex == (int)UIPulseMode.Alpha &&
+                animation.GetComponent<CanvasGroup>() == null && animation.GetComponent<UnityEngine.UI.Graphic>() == null)
+                EditorGUILayout.HelpBox("Alpha requires a CanvasGroup or UI Graphic on this GameObject (including procedural UI).", MessageType.Info);
             EditorGUILayout.LabelField("Easing", "InOutQuad (Yoyo)");
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -35,6 +42,10 @@ namespace Zeraveene.BetterUGUI.Editor
         {
             StopPreview();
             originalScale = animation.transform.localScale;
+            group = animation.GetComponent<CanvasGroup>();
+            graphic = animation.GetComponent<UnityEngine.UI.Graphic>();
+            if (group != null) originalAlpha = group.alpha;
+            if (graphic != null) originalColor = graphic.color;
             preview = true;
             started = EditorApplication.timeSinceStartup;
             animation.Play();
@@ -62,6 +73,8 @@ namespace Zeraveene.BetterUGUI.Editor
                 animation.Stop();
                 animation.transform.localScale = originalScale;
             }
+            if (group != null) group.alpha = originalAlpha;
+            if (graphic != null) graphic.color = originalColor;
             SceneView.RepaintAll();
             EditorApplication.QueuePlayerLoopUpdate();
         }

@@ -3,6 +3,13 @@
 All notable changes to this package are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the package uses [Semantic Versioning](https://semver.org/).
 
+## [4.2.3] - 2026-10-16
+
+### Added
+- UIPulse Mode enum selects Alpha (default) or Scale while retaining duration, yoyo InOutQuad, Always Play, and Play/Stop controls.
+- Alpha automatically targets CanvasGroup or falls back to UI Graphic color alpha, including procedural shapes and images, without requiring CanvasGroup.
+- Edit Mode preview restores original graphic color, CanvasGroup alpha and scale.
+
 ## [4.2.2] - 2026-10-16
 
 ### Added
