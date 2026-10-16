@@ -1,0 +1,32 @@
+{
+    "name": "Coffee.UIEffect.Editor",
+    "rootNamespace": "",
+    "references": [
+        "Coffee.UIEffect",
+        "UnityEngine.UI",
+        "UnityEditor.UI",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.textmeshpro",
+            "expression": "1.0.0",
+            "define": "TMP_ENABLE"
+        },
+        {
+            "name": "com.unity.ugui",
+            "expression": "2.0.0",
+            "define": "TMP_ENABLE"
+        }
+    ],
+    "noEngineReferences": false
+}

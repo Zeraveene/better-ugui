@@ -1,0 +1,19 @@
+{
+    "name": "Coffee.SoftMaskForUGUI.URP",
+    "references": [
+        "Coffee.SoftMaskForUGUI",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "URP_ENABLE"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "1.0.0",
+            "define": "URP_ENABLE"
+        }
+    ]
+}

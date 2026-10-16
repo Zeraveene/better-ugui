@@ -1,0 +1,173 @@
+using Coffee.UISoftMaskInternal;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+using UnityEngine;
+using UnityEngine.Profiling;
+using UnityEngine.Rendering;
+
+namespace Coffee.UISoftMask
+{
+    /// <summary>
+    /// Utility class containing various functions and resources for soft masking.
+    /// </summary>
+    internal static class SoftMaskUtils
+    {
+        /// <summary>
+        /// Object pool for CommandBuffer instances.
+        /// </summary>
+        public static readonly InternalObjectPool<CommandBuffer> commandBufferPool =
+            new InternalObjectPool<CommandBuffer>(
+                () => new CommandBuffer(),
+                x => x != null,
+                x => x.Clear());
+
+        /// <summary>
+        /// Object pool for MaterialPropertyBlock instances.
+        /// </summary>
+        public static readonly InternalObjectPool<MaterialPropertyBlock> materialPropertyBlockPool =
+            new InternalObjectPool<MaterialPropertyBlock>(
+                () => new MaterialPropertyBlock(),
+                x => x != null,
+                x => x.Clear());
+
+        private static Material s_SoftMaskingMaterialAdd;
+        private static Material s_SoftMaskingMaterialSub;
+        private static readonly int s_MainTex = Shader.PropertyToID("_MainTex");
+        private static readonly int s_ColorMask = Shader.PropertyToID("_ColorMask");
+        private static readonly int s_BlendOp = Shader.PropertyToID("_BlendOp");
+        private static readonly int s_ThresholdMin = Shader.PropertyToID("_ThresholdMin");
+        private static readonly int s_ThresholdMax = Shader.PropertyToID("_ThresholdMax");
+        private static readonly int s_RenderScale = Shader.PropertyToID("_RenderScale");
+        private static readonly int s_DynamicResolutionScale = Shader.PropertyToID("_DynamicResolutionScale");
+        private static float s_CurrentRenderScale = 1;
+        private static Vector2 s_CurrentDynamicResolutionScale = Vector2.one;
+
+#if UNITY_EDITOR
+        [InitializeOnLoadMethod]
+#else
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+#endif
+        private static void InitializeOnLoadMethod()
+        {
+            s_CurrentRenderScale = 1;
+            Shader.SetGlobalFloat(s_RenderScale, s_CurrentRenderScale);
+            UIExtraCallbacks.onBeforeCanvasRebuild += () =>
+            {
+                // Discard variations lesser than 0.05f.
+                var renderScale = 1f;
+                if (SoftMaskRenderPipeline.isUniversalRenderPipeline
+                    && 0.05f < Mathf.Abs(SoftMaskRenderPipeline.renderScale - 1))
+                {
+                    renderScale = SoftMaskRenderPipeline.renderScale;
+                }
+
+                if (!Mathf.Approximately(s_CurrentRenderScale, renderScale))
+                {
+                    s_CurrentRenderScale = renderScale;
+                    Shader.SetGlobalFloat(s_RenderScale, s_CurrentRenderScale);
+                }
+            };
+            UIExtraCallbacks.onBeforeCanvasRebuild += () =>
+            {
+                var s = new Vector2(ScalableBufferManager.widthScaleFactor, ScalableBufferManager.heightScaleFactor);
+                s.x = Mathf.Clamp(Mathf.CeilToInt(s.x / 0.05f) * 0.05f, 0.25f, 1.0f);
+                s.y = Mathf.Clamp(Mathf.CeilToInt(s.y / 0.05f) * 0.05f, 0.25f, 1.0f);
+
+                if (SoftMaskRenderPipeline.isUniversalRenderPipeline
+                    && Mathf.Abs(SoftMaskRenderPipeline.renderScale - 1) <= 0.05f)
+                {
+                    s = Vector2.one;
+                }
+
+                if (s_CurrentDynamicResolutionScale != s)
+                {
+                    s_CurrentDynamicResolutionScale = s;
+                    Shader.SetGlobalVector(s_DynamicResolutionScale, s_CurrentDynamicResolutionScale);
+                }
+            };
+
+#if UNITY_EDITOR
+            if (!Misc.isBatchOrBuilding)
+            {
+                // Enable the 'SOFTMASK_EDITOR' keyword only when drawing in the scene view camera.
+                RenderPipelineManager.beginCameraRendering += (_, c) => EnableSoftMaskEditor(true, c);
+                RenderPipelineManager.endCameraRendering += (_, c) => EnableSoftMaskEditor(false, c);
+                Camera.onPreRender += c => EnableSoftMaskEditor(true, c);
+                Camera.onPostRender += c => EnableSoftMaskEditor(false, c);
+
+                void EnableSoftMaskEditor(bool begin, Camera cam)
+                {
+                    if (cam.cameraType == CameraType.SceneView)
+                    {
+                        if (begin)
+                        {
+                            Shader.EnableKeyword("SOFTMASK_EDITOR");
+                        }
+                        else
+                        {
+                            Shader.DisableKeyword("SOFTMASK_EDITOR");
+                        }
+                    }
+                }
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Applies properties to a MaterialPropertyBlock for soft masking.
+        /// </summary>
+        public static void ApplyMaterialPropertyBlock(MaterialPropertyBlock mpb, int depth, Texture texture,
+            MinMax01 threshold, float alpha)
+        {
+            Profiler.BeginSample("(SM4UI)[SoftMaskUtils] ApplyMaterialPropertyBlock");
+            var colorMask = Vector4.zero;
+            colorMask[depth] = alpha;
+            mpb.SetVector(s_ColorMask, colorMask);
+            mpb.SetTexture(s_MainTex, texture != null ? texture : null);
+            mpb.SetFloat(s_ThresholdMin, threshold.min);
+            mpb.SetFloat(s_ThresholdMax, threshold.max);
+            Profiler.EndSample();
+        }
+
+        /// <summary>
+        /// Gets the soft masking material based on the masking method.
+        /// </summary>
+        public static Material GetSoftMaskingMaterial(MaskingShape.MaskingMethod method)
+        {
+            return method == MaskingShape.MaskingMethod.Additive
+                ? GetSoftMaskingMaterial(ref s_SoftMaskingMaterialAdd, BlendOp.Add)
+                : GetSoftMaskingMaterial(ref s_SoftMaskingMaterialSub, BlendOp.ReverseSubtract);
+        }
+
+        /// <summary>
+        /// Gets or creates the soft masking material with a specific blend operation.
+        /// </summary>
+        private static Material GetSoftMaskingMaterial(ref Material mat, BlendOp op)
+        {
+            if (mat != null) return mat;
+
+            mat = new Material(UISoftMaskProjectSettings.shaderRegistry.FindShaderByName("Hidden/UI/SoftMask"))
+            {
+                hideFlags = HideFlags.DontSave | HideFlags.NotEditable
+            };
+            mat.SetInt(s_BlendOp, (int)op);
+
+#if UNITY_EDITOR
+            UISoftMaskProjectSettings.shaderRegistry.RegisterVariant(mat, "UI > Soft Mask");
+#endif
+            return mat;
+        }
+
+        /// <summary>
+        /// Adds SoftMaskable components to all children of the specified MonoBehaviour.
+        /// </summary>
+        public static void AddSoftMaskableOnChildren(MonoBehaviour self, bool includeSelf)
+        {
+            if (self == null || !self.isActiveAndEnabled) return;
+            if (!UISoftMaskProjectSettings.addSoftMaskableAutomatically) return;
+
+            self.AddComponentOnChildren<SoftMaskable>(includeSelf);
+        }
+    }
+}

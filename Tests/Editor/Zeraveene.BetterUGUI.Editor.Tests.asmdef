@@ -1,6 +1,18 @@
 {
     "name": "Zeraveene.BetterUGUI.Editor.Tests",
-    "references": ["Zeraveene.BetterUGUI", "Zeraveene.BetterUGUI.Editor", "UnityEngine.UI"],
-    "includePlatforms": ["Editor"],
-    "optionalUnityReferences": ["TestAssemblies"]
+    "references": [
+        "Zeraveene.BetterUGUI",
+        "Zeraveene.BetterUGUI.Editor",
+        "UnityEngine.UI",
+        "Coffee.UIEffect",
+        "Coffee.UIParticle",
+        "Unity.TextMeshPro",
+        "Coffee.SoftMaskForUGUI"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
 }

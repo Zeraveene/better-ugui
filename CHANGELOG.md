@@ -3,6 +3,36 @@
 All notable changes to this package are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the package uses [Semantic Versioning](https://semver.org/).
 
+## [4.2.0] - 2026-10-16
+
+### Added
+- Bundled Mob Sakai SoftMaskForUGUI 3.6.5, including inspectors, masking shapes, shaders, MIT license and active Unity 6 TMP support.
+- Optional URP integration for soft-mask render scaling without requiring URP in built-in renderer projects.
+- Integration coverage for mask buffers, automatic child discovery, UIEffect/TMP shader composition and disabling masks.
+
+### Fixed
+- UIEffect shader stripping recognizes bundled SoftMask and retains combined shader variants in player builds.
+- Core mask-drawing shaders are registered automatically, including in builds made without previewing masks in the Editor.
+- Bundled modules retain distinct optional-shader registry identifiers so combined shaders resolve correctly.
+
+## [4.1.1] - 2026-10-16
+
+### Fixed
+- Procedural shapes and outlines use the modern VertexHelper mesh-modifier path so UIEffect receives their geometry and does not make them disappear.
+- Regression coverage checks that UIEffect writes valid UV masks on procedural shape meshes.
+
+## [4.1.0] - 2026-10-16
+
+### Added
+- Bundled Mob Sakai UIEffect 5.11.7 and UI Particle 4.14.1 inside Better uGUI, including inspectors, shaders, UIEffect presets and MIT license notices.
+- Unity 6 TextMeshPro UIEffect shaders are active without a support-sample import.
+- Integration checks for shader/preset resolution, procedural/TMP effect materials and Overlay particle mesh/lifetime behavior.
+
+### Changed
+- Adapted package-relative resources for the combined package while preserving upstream namespaces, assemblies and asset GUIDs.
+- Timeline integrations use optional assemblies; no Timeline package is required.
+- ParticleSystem engine module is declared as a package dependency.
+
 ## [4.0.0] - 2026-10-15
 
 ### Changed

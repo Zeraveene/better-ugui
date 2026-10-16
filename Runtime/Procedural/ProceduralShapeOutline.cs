@@ -12,6 +12,11 @@ using UnityEngine.UI;
 [MovedFrom(true, sourceNamespace: "", sourceAssembly: "MaxsusWorks.ProceduralUI", sourceClassName: "ProceduralShapeOutline")]
 public sealed class ProceduralShapeOutline : MaskableGraphic
 {
+    private ProceduralShapeOutline()
+    {
+        useLegacyMeshGeneration = false;
+    }
+
     #region Inspector
 
     [SerializeField, FormerlySerializedAs("source")] private ProceduralShapeGraphic _source;

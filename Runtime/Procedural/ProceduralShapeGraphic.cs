@@ -8,6 +8,12 @@ using UnityEngine.Scripting.APIUpdating;
 [MovedFrom(true, sourceAssembly: "MaxsusWorks.ProceduralUI")]
 public abstract partial class ProceduralShapeGraphic : MaskableGraphic, ICanvasRaycastFilter
 {
+    protected ProceduralShapeGraphic()
+    {
+        // UIEffect and other modern mesh modifiers operate on VertexHelper.
+        useLegacyMeshGeneration = false;
+    }
+
     #region Inspector
 
     [Header("Fill")]

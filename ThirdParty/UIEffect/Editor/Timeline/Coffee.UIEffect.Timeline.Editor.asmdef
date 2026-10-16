@@ -1,0 +1,23 @@
+{
+    "name": "Coffee.UIEffect.Timeline.Editor",
+    "references": [
+        "Coffee.UIEffect",
+        "Coffee.UIEffect.Timeline",
+        "Unity.Timeline",
+        "Unity.Timeline.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "TIMELINE_ENABLE"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.timeline",
+            "expression": "1.0.0",
+            "define": "TIMELINE_ENABLE"
+        }
+    ]
+}

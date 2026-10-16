@@ -1,0 +1,31 @@
+{
+    "name": "Coffee.SoftMaskForUGUI",
+    "references": [
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.modules.vr",
+            "expression": "1.0.0",
+            "define": "UNITY_MODULE_VR"
+        },
+        {
+            "name": "com.unity.textmeshpro",
+            "expression": "1.0.0",
+            "define": "TMP_ENABLE"
+        },
+        {
+            "name": "com.unity.ugui",
+            "expression": "2.0.0",
+            "define": "TMP_ENABLE"
+        },
+        {
+            "name": "com.unity.textmeshpro",
+            "expression": "[1.0.0,3.2.0-pre.1)",
+            "define": "LEGACY_TMP_ENABLE"
+        }
+    ]
+}

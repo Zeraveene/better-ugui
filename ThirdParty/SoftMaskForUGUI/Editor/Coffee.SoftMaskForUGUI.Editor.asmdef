@@ -1,0 +1,12 @@
+{
+    "name": "Coffee.SoftMaskForUGUI.Editor",
+    "references": [
+        "Coffee.SoftMaskForUGUI",
+        "UnityEngine.UI",
+        "UnityEditor.UI"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

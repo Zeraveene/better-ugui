@@ -1,8 +1,8 @@
 # Better uGUI
 
-`com.zeraveene.better-ugui` extends Unity uGUI with reusable features for game interfaces. The current modules provide resolution-independent procedural graphics, mesh gradients driven by reusable presets, and built-in view/button transitions.
+`com.zeraveene.better-ugui` extends Unity uGUI with reusable features for game interfaces. The current modules provide resolution-independent procedural graphics, mesh gradients driven by reusable presets, built-in view/button transitions, and bundled Mob Sakai UIEffect / UI Particle.
 
-Soft masking and Canvas particle system support are planned additions; they are not implemented in this version.
+Canvas particle rendering and Mob Sakai SoftMaskForUGUI 3.6.5 are included. See [soft masking](SoftMask.md).
 
 ## Requirements
 
@@ -14,9 +14,9 @@ Soft masking and Canvas particle system support are planned additions; they are 
 
 Pick one:
 
-- **Tarball:** `Window > Package Manager > + > Install package from tarball...` and pick `com.zeraveene.better-ugui-4.0.0.tgz`.
+- **Tarball:** `Window > Package Manager > + > Install package from tarball...` and pick `com.zeraveene.better-ugui-4.2.0.tgz`.
 - **Embedded copy:** copy the `com.zeraveene.better-ugui` folder into your project's `Packages/` folder. Unity picks it up without a manifest entry.
-- **Git URL (recommended):** `Window > Package Manager > + > Install package from git URL...`, then enter `https://github.com/zeraveene/better-ugui.git#v4.0.0`. Private repositories require Git authentication on each machine.
+- **Git URL (recommended):** `Window > Package Manager > + > Install package from git URL...`, then enter `https://github.com/zeraveene/better-ugui.git#v4.2.0`. Private repositories require Git authentication on each machine.
 
 Remove any older copy of these scripts (for example from `Assets/_ProjectData/Scripts/UI/` or an older `UI-Tools.unitypackage` import) before installing. The scripts keep their original GUIDs, so existing scenes and prefabs rebind to the package automatically, but two copies of the same classes will not compile.
 
@@ -27,7 +27,9 @@ Remove any older copy of these scripts (for example from `Assets/_ProjectData/Sc
 | `Zeraveene.BetterUGUI` | Runtime components (`Runtime/`) | `UnityEngine.UI`, `Unity.TextMeshPro` |
 | `Zeraveene.BetterUGUI.Editor` | Inspectors and editor utilities (`Editor/`) | runtime assembly, `UnityEngine.UI`, `UnityEditor.UI`, `Unity.TextMeshPro` |
 
-Both are auto-referenced, so scripts in Assembly-CSharp see the types directly. Your own asmdefs must add `Zeraveene.BetterUGUI` to their references.
+The two Better uGUI assemblies are auto-referenced, so scripts in Assembly-CSharp see the types directly. Your own asmdefs must add `Zeraveene.BetterUGUI` to their references.
+
+Bundled module assemblies are `Coffee.UIEffect`, `Coffee.UIEffect.Editor`, `Coffee.UIParticle`, `Coffee.UIParticle.Editor`, `Coffee.SoftMaskForUGUI`, and `Coffee.SoftMaskForUGUI.Editor`. Their runtime assemblies are auto-referenced. Custom asmdefs must explicitly reference the modules they use. Optional `Coffee.UIEffect.Timeline` / `.Editor` assemblies compile only when Timeline is installed. `Coffee.SoftMaskForUGUI.URP` activates only when URP is installed. See [effects and particles](EffectsAndParticles.md).
 
 ## Components
 
@@ -54,7 +56,7 @@ Guides:
 
 ## Samples
 
-The package ships no samples. Create gradient and transition presets in your own project folders (`Assets > Create`, or from code) and reference them from the components.
+The package ships no demo scenes. UIEffect presets and Unity 6 TMP effect shaders are included directly. Create gradient and transition presets in your own project folders (`Assets > Create`, or from code) and reference them from the components.
 
 ## Creating presets
 
