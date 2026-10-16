@@ -16,7 +16,7 @@ Reusable extensions for Unity uGUI by Zeraveene.
 In Unity, open **Window > Package Manager > + > Install package from git URL** and enter:
 
 ```text
-https://github.com/zeraveene/better-ugui.git#v4.2.1
+https://github.com/zeraveene/better-ugui.git#v4.2.2
 ```
 
 Requires Unity 6000.0+ and uGUI 2.0.0. Private repository access requires Git authentication on each machine. Commit your project's `Packages/manifest.json` and `Packages/packages-lock.json` so other machines can restore the same package version.
@@ -51,3 +51,7 @@ This repository contains the UPM package at its root; it is not a Unity project.
 Add **UI > Better uGUI > UI Animation** to a UI object. Enable Fade and/or Scale in their foldout checkboxes, set From/To and Duration, then press Play to preview. Fade requires a CanvasGroup or Image on the same object (CanvasGroup takes priority). Defaults: fade 1 → 0, uniform scale 1 → 1.3, 0.3 seconds each, OutQuad easing. Channels play together with independent durations.
 
 Call `bool Play()` to restart from the configured values and `bool Stop()` to stop at the current values. Play returns false when disabled or no channel can run; Stop returns whether it interrupted playback. Playback is explicit, with no events or automatic playback. Edit Mode Stop/deselect restores the original values.
+
+### UI pulse
+
+Add **UI > Better uGUI > UI Pulse** for a repeating uniform scale pulse. Defaults: From 1, To 0.5, Duration 0.3 seconds per direction, InOutQuad easing with yoyo playback. Enable **Always Play** to start whenever the component is enabled in Play Mode, or call `bool Play()` / `bool Stop()` explicitly. Play restarts from From; Stop holds the current scale. The inspector Play/Stop buttons also preview in Edit Mode and restore the original scale on stop or deselection.

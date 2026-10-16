@@ -3,6 +3,12 @@
 All notable changes to this package are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the package uses [Semantic Versioning](https://semver.org/).
 
+## [4.2.2] - 2026-10-16
+
+### Added
+- `Zeraveene.BetterUGUI.UIPulse`: repeating uniform scale from 1 to 0.5 and back, with InOutQuad easing and a configurable 0.3-second duration per direction.
+- Always Play starts pulsing on enable; bool-returning Play/Stop methods and inspector preview match UIAnimation. Edit Mode preview restores the original scale when stopped or deselected.
+
 ## [4.2.1] - 2026-10-16
 
 ### Added
