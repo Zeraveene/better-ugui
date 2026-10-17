@@ -1,7 +1,7 @@
 {
   "name": "com.zeraveene.better-ugui",
   "displayName": "Better uGUI",
-  "version": "4.2.3",
+  "version": "4.2.4",
   "unity": "6000.0",
   "description": "Extensions for Unity uGUI: procedural graphics, mesh gradients, built-in animations, and bundled Mob Sakai UIEffect, UI Particle, and SoftMask.",
   "keywords": [

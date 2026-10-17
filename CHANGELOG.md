@@ -3,6 +3,15 @@
 All notable changes to this package are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the package uses [Semantic Versioning](https://semver.org/).
 
+## [4.2.4] - 2026-10-17
+
+### Added
+- UIAnimation Position channel: animates anchored position (local position without a RectTransform) From/To with its own duration and OutQuad easing. New components start Position at their current spot.
+- UIAnimation Fade Target field accepts a CanvasGroup or any Graphic (ProceduralShape, Image, RawImage). Left empty, it uses this GameObject's CanvasGroup, then its Graphic.
+
+### Changed
+- UIAnimation Fade no longer requires a CanvasGroup or Image; procedural shapes and RawImages fade through Graphic color alpha. Edit Mode preview restores the original position as well as alpha and scale.
+
 ## [4.2.3] - 2026-10-16
 
 ### Added

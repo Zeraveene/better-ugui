@@ -46,6 +46,8 @@ Bundled module assemblies are `Coffee.UIEffect`, `Coffee.UIEffect.Editor`, `Coff
 | `UIBase` / `UIButtonBase` | `Zeraveene.Shared` | View lifecycle (Initialize/Show/Hide) with fade/slide/scale transitions. |
 | `UITransitionPreset` | `Zeraveene.Shared` | Shared transition settings for `UIBase`. |
 | `UIViewSequence` | `Zeraveene.Shared` | Sequenced view transforms. |
+| `UIAnimation` | `Zeraveene.BetterUGUI` | One-shot Fade, Scale and Position channels (OutQuad) with Play/Stop and inspector preview. Fade drives a CanvasGroup or any Graphic (ProceduralShape, Image, RawImage). |
+| `UIPulse` | `Zeraveene.BetterUGUI` | Repeating alpha or scale pulse. |
 | `ButtonScaler` | `Zeraveene.SDK.UIEffect` | Hover/press scale feedback through the shared animation runner. |
 | Inspector attributes | `Zeraveene.Shared.Inspector` | Lightweight grouping/conditional/button attributes used by the package inspectors. |
 
