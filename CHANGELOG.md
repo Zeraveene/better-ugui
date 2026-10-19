@@ -3,6 +3,12 @@
 All notable changes to this package are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the package uses [Semantic Versioning](https://semver.org/).
 
+## [4.2.5] - 2026-10-19
+
+### Added
+- `bool PlayReverse()` on UIAnimation and UIPulse restarts from To toward From with existing durations and easing. UIAnimation reverses Fade, Scale and Position; UIPulse continues to yoyo in either Alpha or Scale mode.
+- Play Reverse inspector buttons support runtime playback and Edit Mode preview without changing serialized From/To values.
+
 ## [4.2.4] - 2026-10-17
 
 ### Added

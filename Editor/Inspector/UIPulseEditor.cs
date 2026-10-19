@@ -30,6 +30,11 @@ namespace Zeraveene.BetterUGUI.Editor
                     if (Application.isPlaying) animation.Play();
                     else StartPreview(animation);
                 }
+                if (GUILayout.Button("Play Reverse"))
+                {
+                    if (Application.isPlaying) animation.PlayReverse();
+                    else StartPreview(animation, true);
+                }
                 if (GUILayout.Button("Stop"))
                 {
                     if (Application.isPlaying) animation.Stop();
@@ -38,7 +43,7 @@ namespace Zeraveene.BetterUGUI.Editor
             }
         }
 
-        private void StartPreview(AnimationComponent animation)
+        private void StartPreview(AnimationComponent animation, bool reverse = false)
         {
             StopPreview();
             originalScale = animation.transform.localScale;
@@ -48,7 +53,8 @@ namespace Zeraveene.BetterUGUI.Editor
             if (graphic != null) originalColor = graphic.color;
             preview = true;
             started = EditorApplication.timeSinceStartup;
-            animation.Play();
+            if (reverse) animation.PlayReverse();
+            else animation.Play();
             EditorApplication.update += UpdatePreview;
         }
 

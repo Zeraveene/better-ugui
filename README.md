@@ -57,3 +57,5 @@ Call `bool Play()` to restart from the configured values and `bool Stop()` to st
 Add **UI > Better uGUI > UI Pulse** for a repeating pulse. Choose **Alpha** (default) or **Scale** from Mode. Alpha automatically uses a CanvasGroup if present, otherwise the same object's `UnityEngine.UI.Graphic`, including procedural shapes, procedural images, standard Images and text. A CanvasGroup is optional. Scale animates uniform local scale.
 
 Defaults: From 1, To 0.5, Duration 0.3 seconds per direction, InOutQuad easing with yoyo playback. Enable **Always Play** to start whenever the component is enabled in Play Mode, or call `bool Play()` / `bool Stop()` explicitly. Play restarts from From; Stop holds the current value. The inspector Play/Stop buttons also preview in Edit Mode and restore the original alpha and scale on stop or deselection.
+
+Both `UIAnimation` and `UIPulse` expose `bool PlayReverse()` and an inspector **Play Reverse** button. Reverse restarts at the configured To values and animates toward From with the same duration and easing, without modifying settings. UIPulse continues to yoyo from that reversed starting direction. `Play()` always restarts forward.

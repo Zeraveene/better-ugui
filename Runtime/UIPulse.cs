@@ -22,10 +22,18 @@ namespace Zeraveene.BetterUGUI
         private bool playing;
         private float elapsed;
 
+        private bool reverse;
+
         /// <summary>Restart the repeating pulse from From. Returns false if disabled or Alpha has no supported target.</summary>
-        public bool Play()
+        public bool Play() => BeginPlayback(false);
+
+        /// <summary>Restart from To toward From, using the same durations and easing.</summary>
+        public bool PlayReverse() => BeginPlayback(true);
+
+        private bool BeginPlayback(bool playReverse)
         {
             Stop();
+            reverse = playReverse;
             if (!isActiveAndEnabled) return false;
             group = GetComponent<CanvasGroup>();
             graphic = GetComponent<UnityEngine.UI.Graphic>();
@@ -49,7 +57,7 @@ namespace Zeraveene.BetterUGUI
             if (!playing) return false;
             float t = Mathf.PingPong(seconds / Mathf.Max(0.001f, duration), 1f);
             float eased = UIEasing.Evaluate(UIEase.InOutQuad, t);
-            float value = Mathf.LerpUnclamped(from, to, eased);
+            float value = Mathf.LerpUnclamped(from, to, reverse ? 1f - eased : eased);
             if (mode == UIPulseMode.Scale)
                 transform.localScale = Vector3.one * value;
             else if (group != null)

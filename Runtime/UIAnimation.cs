@@ -30,10 +30,18 @@ namespace Zeraveene.BetterUGUI
         private float duration;
         private bool playing, animateFade, animateScale, animatePosition;
 
+        private bool reverse;
+
         /// <summary>Restart enabled channels from their configured values. Returns false if nothing can play.</summary>
-        public bool Play()
+        public bool Play() => BeginPlayback(false);
+
+        /// <summary>Restart from To toward From, using the same durations and easing.</summary>
+        public bool PlayReverse() => BeginPlayback(true);
+
+        private bool BeginPlayback(bool playReverse)
         {
             Stop();
+            reverse = playReverse;
             if (!isActiveAndEnabled) return false;
             ResolveFadeTarget(out group, out graphic);
             animateFade = fadeEnabled && (group != null || graphic != null);
@@ -98,10 +106,11 @@ namespace Zeraveene.BetterUGUI
             return playing;
         }
 
-        private static float Progress(float elapsed, float seconds)
+        private float Progress(float elapsed, float seconds)
         {
             float t = seconds <= 0f ? 1f : Mathf.Clamp01(elapsed / seconds);
-            return 1f - (1f - t) * (1f - t); // OutQuad
+            float eased = 1f - (1f - t) * (1f - t); // OutQuad
+            return reverse ? 1f - eased : eased;
         }
 
         void IUIAnimationReceiver.ApplyAnimation(float progress) => EvaluatePreview(progress * duration);
