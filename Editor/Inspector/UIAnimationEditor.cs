@@ -1,4 +1,6 @@
 using UnityEditor;
+using UnityEditor.UIElements;
+using UnityEngine.UIElements;
 using UnityEngine;
 using AnimationComponent = Zeraveene.BetterUGUI.UIAnimation;
 
@@ -7,7 +9,7 @@ namespace Zeraveene.BetterUGUI.Editor
     [CustomEditor(typeof(AnimationComponent))]
     public sealed class UIAnimationEditor : UnityEditor.Editor
     {
-        private bool fadeOpen = true, scaleOpen = true, positionOpen = true, preview;
+        private bool preview;
         private double started;
         private Transform previewTarget;
         private Vector3 originalScale, originalLocalPosition;
@@ -17,70 +19,120 @@ namespace Zeraveene.BetterUGUI.Editor
         private float originalAlpha;
         private Color originalColor;
 
-        public override void OnInspectorGUI()
+        public override VisualElement CreateInspectorGUI()
         {
-            serializedObject.Update();
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("animationTarget"), new GUIContent("Target"));
-            DrawChannel("Fade", "fade", ref fadeOpen, DrawFadeTarget);
-            DrawChannel("Scale", "scale", ref scaleOpen);
-            DrawChannel("Position", "position", ref positionOpen);
-            if (serializedObject.hasModifiedProperties) StopPreview();
-            serializedObject.ApplyModifiedProperties();
+            var root = new VisualElement();
+            root.AddToClassList("ui-animation-inspector");
+            string scriptPath = AssetDatabase.GetAssetPath(MonoScript.FromScriptableObject(this));
+            string stylesheetPath = System.IO.Path.ChangeExtension(scriptPath, ".uss");
+            var stylesheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(stylesheetPath);
+            if (stylesheet != null) root.styleSheets.Add(stylesheet);
+
+            root.Add(Field("animationTarget", "Target"));
+            var fade = AddChannel(root, "Fade", "fade");
+            fade.Add(Field("fadeTarget", "Fade Target"));
+            fade.Add(Field("fadeFrom", "From"));
+            fade.Add(Field("fadeTo", "To"));
+            fade.Add(Field("fadeDuration", "Duration (s)"));
+            var warning = new HelpBox("Assign a CanvasGroup or Graphic to Fade Target, or add one to the animation Target.", HelpBoxMessageType.Info);
+            fade.Add(warning);
+
+            var scale = AddChannel(root, "Scale", "scale");
+            scale.Add(Field("separateScaleAxes", "Separate Axes"));
+            var uniformScale = new VisualElement();
+            uniformScale.Add(Field("scaleFrom", "From"));
+            uniformScale.Add(Field("scaleTo", "To"));
+            scale.Add(uniformScale);
+            var xyzScale = new VisualElement();
+            xyzScale.Add(Field("scaleFromXYZ", "From"));
+            xyzScale.Add(Field("scaleToXYZ", "To"));
+            scale.Add(xyzScale);
+            scale.Add(Field("scaleDuration", "Duration (s)"));
+            var axesProperty = serializedObject.FindProperty("separateScaleAxes");
+            void UpdateScaleFields(SerializedProperty property)
+            {
+                uniformScale.EnableInClassList("hidden", property.boolValue);
+                xyzScale.EnableInClassList("hidden", !property.boolValue);
+            }
+            UpdateScaleFields(axesProperty);
+            root.TrackPropertyValue(axesProperty, UpdateScaleFields);
+
+            var position = AddChannel(root, "Position", "position");
+            position.Add(Field("positionFrom", "From"));
+            position.Add(Field("positionTo", "To"));
+            position.Add(Field("positionDuration", "Duration (s)"));
+
+            var easing = new Label("Easing · OutQuad");
+            easing.AddToClassList("animation-hint");
+            root.Add(easing);
+            var controls = new VisualElement();
+            controls.AddToClassList("playback-controls");
+            controls.Add(new Button(() => Play(false)) { text = "Play" });
+            controls.Add(new Button(() => Play(true)) { text = "Play Reverse" });
+            controls.Add(new Button(() =>
+            {
+                if (Application.isPlaying) ((AnimationComponent)target).Stop();
+                else StopPreview();
+            }) { text = "Stop" });
+            root.Add(controls);
+
+            void RefreshWarning()
+            {
+                var animation = (AnimationComponent)target;
+                animation.ResolveFadeTarget(out var fadeGroup, out var fadeGraphic);
+                warning.EnableInClassList("hidden", fadeGroup != null || fadeGraphic != null);
+            }
+            RefreshWarning();
+            root.TrackSerializedObjectValue(serializedObject, _ =>
+            {
+                StopPreview();
+                RefreshWarning();
+            });
+            root.RegisterCallback<DetachFromPanelEvent>(_ => StopPreview());
+            return root;
+        }
+
+        private PropertyField Field(string propertyName, string label)
+        {
+            return new PropertyField(serializedObject.FindProperty(propertyName), label);
+        }
+
+        private VisualElement AddChannel(VisualElement root, string label, string prefix)
+        {
+            var box = new Box();
+            box.AddToClassList("animation-channel");
+            var header = new VisualElement();
+            header.AddToClassList("channel-header");
+            string stateKey = "BetterUGUI.UIAnimation." + prefix;
+            var foldout = new Foldout { text = label, value = SessionState.GetBool(stateKey, true) };
+            foldout.AddToClassList("channel-foldout");
+            header.Add(foldout);
+            var enabledProperty = serializedObject.FindProperty(prefix + "Enabled");
+            var enabled = new Toggle("Enabled") { bindingPath = enabledProperty.propertyPath };
+            enabled.AddToClassList("channel-enabled");
+            header.Add(enabled);
+            box.Add(header);
+            var content = new VisualElement();
+            content.AddToClassList("channel-content");
+            content.EnableInClassList("hidden", !foldout.value);
+            content.SetEnabled(enabledProperty.boolValue);
+            foldout.RegisterValueChangedCallback(evt =>
+            {
+                content.EnableInClassList("hidden", !evt.newValue);
+                SessionState.SetBool(stateKey, evt.newValue);
+            });
+            content.TrackPropertyValue(enabledProperty, property => content.SetEnabled(property.boolValue));
+            box.Add(content);
+            root.Add(box);
+            return content;
+        }
+
+        private void Play(bool reverse)
+        {
             var animation = (AnimationComponent)target;
-            animation.ResolveFadeTarget(out var fadeGroup, out var fadeGraphic);
-            if (serializedObject.FindProperty("fadeEnabled").boolValue && fadeGroup == null && fadeGraphic == null)
-                EditorGUILayout.HelpBox("Fade needs a CanvasGroup or Graphic on the animation Target, or an assigned Fade Target.", MessageType.Info);
-            EditorGUILayout.LabelField("Easing", "OutQuad");
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                if (GUILayout.Button("Play"))
-                {
-                    if (Application.isPlaying) animation.Play();
-                    else StartPreview(animation);
-                }
-                if (GUILayout.Button("Play Reverse"))
-                {
-                    if (Application.isPlaying) animation.PlayReverse();
-                    else StartPreview(animation, true);
-                }
-                if (GUILayout.Button("Stop"))
-                {
-                    if (Application.isPlaying) animation.Stop();
-                    else StopPreview();
-                }
-            }
-        }
-
-        private void DrawFadeTarget()
-        {
-            var property = serializedObject.FindProperty("fadeTarget");
-            EditorGUI.BeginChangeCheck();
-            var value = EditorGUILayout.ObjectField(new GUIContent("Fade Target", property.tooltip), property.objectReferenceValue, typeof(Component), true);
-            if (!EditorGUI.EndChangeCheck()) return;
-            if (value is GameObject go) value = go.GetComponent<CanvasGroup>() != null ? go.GetComponent<CanvasGroup>() : go.GetComponent<UnityEngine.UI.Graphic>();
-            else if (value is Component c && !(c is CanvasGroup) && !(c is UnityEngine.UI.Graphic))
-                value = c.GetComponent<CanvasGroup>() != null ? c.GetComponent<CanvasGroup>() : c.GetComponent<UnityEngine.UI.Graphic>();
-            property.objectReferenceValue = value;
-        }
-
-        private void DrawChannel(string label, string prefix, ref bool expanded, System.Action extra = null)
-        {
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                var enabled = serializedObject.FindProperty(prefix + "Enabled");
-                enabled.boolValue = EditorGUILayout.Toggle(enabled.boolValue, GUILayout.Width(18));
-                expanded = EditorGUILayout.Foldout(expanded, label, true);
-            }
-            if (!expanded) return;
-            using (new EditorGUI.DisabledScope(!serializedObject.FindProperty(prefix + "Enabled").boolValue))
-            {
-                EditorGUI.indentLevel++;
-                extra?.Invoke();
-                EditorGUILayout.PropertyField(serializedObject.FindProperty(prefix + "From"), new GUIContent("From"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty(prefix + "To"), new GUIContent("To"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty(prefix + "Duration"), new GUIContent("Duration (s)"));
-                EditorGUI.indentLevel--;
-            }
+            if (!Application.isPlaying) StartPreview(animation, reverse);
+            else if (reverse) animation.PlayReverse();
+            else animation.Play();
         }
 
         private void StartPreview(AnimationComponent animation, bool reverse = false)

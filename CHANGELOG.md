@@ -3,6 +3,14 @@
 All notable changes to this package are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the package uses [Semantic Versioning](https://semver.org/).
 
+## [4.2.8] - 2026-11-03
+
+### Added
+- UIAnimation Scale has a Separate Axes option with independent XYZ From/To values. Existing uniform scale values remain supported.
+
+### Changed
+- UIAnimation inspector uses UI Toolkit with boxed Fade, Scale and Position foldouts, separate enable switches, and grouped playback controls.
+
 ## [4.2.7] - 2026-11-03
 
 ### Added

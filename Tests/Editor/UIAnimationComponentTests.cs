@@ -108,6 +108,30 @@ namespace Zeraveene.BetterUGUI.Tests
             Assert.AreEqual(1f, go.GetComponent<CanvasGroup>().alpha);
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void SeparateScaleAxesAnimateIndependently(bool reverse)
+        {
+            var animation = Create(typeof(RectTransform));
+            Vector3 from = new Vector3(0.2f, 0.5f, 1f);
+            Vector3 to = new Vector3(1f, 2f, 3f);
+            Set(animation, so =>
+            {
+                so.FindProperty("fadeEnabled").boolValue = false;
+                so.FindProperty("scaleEnabled").boolValue = true;
+                so.FindProperty("separateScaleAxes").boolValue = true;
+                so.FindProperty("scaleFromXYZ").vector3Value = from;
+                so.FindProperty("scaleToXYZ").vector3Value = to;
+            });
+            Assert.IsTrue(reverse ? animation.PlayReverse() : animation.Play());
+            Assert.AreEqual(reverse ? to : from, go.transform.localScale);
+            Assert.IsTrue(animation.EvaluatePreview(0.15f));
+            Vector3 midpoint = reverse ? new Vector3(0.4f, 0.875f, 1.5f) : new Vector3(0.8f, 1.625f, 2.5f);
+            Assert.Less(Vector3.Distance(midpoint, go.transform.localScale), 1e-4f);
+            Assert.IsFalse(animation.EvaluatePreview(0.3f));
+            Assert.AreEqual(reverse ? from : to, go.transform.localScale);
+        }
+
         [Test]
         public void DestroyedAnimationTargetStopsPlayback()
         {

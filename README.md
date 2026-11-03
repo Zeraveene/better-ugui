@@ -52,6 +52,8 @@ Add **UI > Better uGUI > UI Animation** and assign **Target** to the object to a
 
 For entry and exit, configure From as the hidden state and To as the visible state. Call `Play()` for entry and `PlayReverse()` for exit. Separate UIAnimation components on controller objects can target the same panel when entry and exit need different settings. Activate the panel before entry and keep the controller enabled throughout playback.
 
+The UI Toolkit inspector groups Fade, Scale and Position into boxed foldouts with independent enable switches. In Scale, enable **Separate Axes** to edit XYZ From/To values, for example `(0, 1, 1)` to `(1, 1, 1)` for a horizontal reveal. With Separate Axes off, Scale uses the original uniform From/To values.
+
 Call `bool Play()` to restart from the configured values and `bool Stop()` to stop at the current values. Play returns false when disabled or no channel can run; Stop returns whether it interrupted playback. Playback is explicit, with no events or automatic playback. Edit Mode Stop/deselect restores the original values.
 
 ### UI pulse

@@ -17,8 +17,12 @@ namespace Zeraveene.BetterUGUI
         [SerializeField, Range(0f, 1f)] private float fadeTo = 0f;
         [SerializeField, Min(0f)] private float fadeDuration = 0.3f;
         [SerializeField] private bool scaleEnabled;
+        [SerializeField, Tooltip("Animate X, Y and Z independently instead of using one uniform scale.")]
+        private bool separateScaleAxes;
         [SerializeField] private float scaleFrom = 1f;
         [SerializeField] private float scaleTo = 1.3f;
+        [SerializeField] private Vector3 scaleFromXYZ = Vector3.one;
+        [SerializeField] private Vector3 scaleToXYZ = Vector3.one * 1.3f;
         [SerializeField, Min(0f)] private float scaleDuration = 0.3f;
         [SerializeField] private bool positionEnabled;
         [SerializeField, Tooltip("Anchored position (RectTransform) or local position.")]
@@ -107,7 +111,11 @@ namespace Zeraveene.BetterUGUI
                 }
             }
             if (animateScale)
-                playbackTarget.localScale = Vector3.one * Mathf.LerpUnclamped(scaleFrom, scaleTo, Progress(elapsed, scaleDuration));
+            {
+                Vector3 from = separateScaleAxes ? scaleFromXYZ : Vector3.one * scaleFrom;
+                Vector3 to = separateScaleAxes ? scaleToXYZ : Vector3.one * scaleTo;
+                playbackTarget.localScale = Vector3.LerpUnclamped(from, to, Progress(elapsed, scaleDuration));
+            }
             if (animatePosition)
             {
                 Vector2 position = Vector2.LerpUnclamped(positionFrom, positionTo, Progress(elapsed, positionDuration));
