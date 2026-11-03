@@ -40,7 +40,7 @@ public sealed class ProceduralShapeOutline : MaskableGraphic
     private ProceduralShapeImage _subscribedImageSource;
     private ProceduralShapeOutline _subscribedOutlineSource;
     private bool _hasTransformState;
-    private int _sourceTransformId;
+    private Transform _trackedSourceTransform;
     private Matrix4x4 _sourceToLocal;
     private float _localPixelSize;
 
@@ -308,17 +308,16 @@ public sealed class ProceduralShapeOutline : MaskableGraphic
         Transform sourceTransform = _outlineSource != null ? _outlineSource.transform
             : _source != null ? _source.transform
             : _imageSource != null ? _imageSource.transform : null;
-        int sourceId = sourceTransform != null ? sourceTransform.GetInstanceID() : 0;
         Matrix4x4 sourceToLocal = sourceTransform != null
             ? rectTransform.worldToLocalMatrix * sourceTransform.localToWorldMatrix
             : Matrix4x4.identity;
         float localPixelSize = GetLocalPixels(1f);
-        if (_hasTransformState && _sourceTransformId == sourceId &&
+        if (_hasTransformState && ReferenceEquals(_trackedSourceTransform, sourceTransform) &&
             _sourceToLocal == sourceToLocal && _localPixelSize == localPixelSize)
             return;
 
         _hasTransformState = true;
-        _sourceTransformId = sourceId;
+        _trackedSourceTransform = sourceTransform;
         _sourceToLocal = sourceToLocal;
         _localPixelSize = localPixelSize;
         // Transform changes do not raise the source's GeometryChanged event.

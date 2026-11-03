@@ -3,6 +3,11 @@
 All notable changes to this package are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the package uses [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] - 2026-11-03
+
+### Fixed
+- Outline transform tracking compares source references directly, avoiding the obsolete GetInstanceID API and supporting earlier Unity 6 versions without requiring GetEntityId.
+
 ## [0.1.0] - 2026-11-03
 
 ### Changed
