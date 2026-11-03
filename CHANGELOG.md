@@ -3,6 +3,12 @@
 All notable changes to this package are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the package uses [Semantic Versioning](https://semver.org/).
 
+## [4.2.6] - 2026-11-03
+
+### Added
+- UIPulse Restart checkbox repeats each pass from its starting value, with a selectable Ease including OutQuad. The default is ping-pong with InOutQuad.
+- Restart works for Alpha, Scale, reverse playback and Edit Mode preview.
+
 ## [4.2.5] - 2026-10-19
 
 ### Added

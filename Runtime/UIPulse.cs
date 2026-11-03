@@ -12,8 +12,11 @@ namespace Zeraveene.BetterUGUI
         [SerializeField] private UIPulseMode mode = UIPulseMode.Alpha;
         [SerializeField] private float from = 1f;
         [SerializeField] private float to = 0.5f;
-        [SerializeField, Min(0.001f), Tooltip("Seconds for each direction of the pulse.")]
+        [SerializeField, Min(0.001f), Tooltip("Seconds for each pass from one value to the other.")]
         private float duration = 0.3f;
+        [SerializeField, Tooltip("Repeat from the starting value after each pass instead of ping-ponging.")]
+        private bool restart;
+        [SerializeField] private UIEase ease = UIEase.InOutQuad;
         [SerializeField, Tooltip("Start pulsing whenever this component is enabled in Play Mode.")]
         private bool alwaysPlay;
 
@@ -55,8 +58,9 @@ namespace Zeraveene.BetterUGUI
         internal bool EvaluatePreview(float seconds)
         {
             if (!playing) return false;
-            float t = Mathf.PingPong(seconds / Mathf.Max(0.001f, duration), 1f);
-            float eased = UIEasing.Evaluate(UIEase.InOutQuad, t);
+            float progress = seconds / Mathf.Max(0.001f, duration);
+            float t = restart ? Mathf.Repeat(progress, 1f) : Mathf.PingPong(progress, 1f);
+            float eased = UIEasing.Evaluate(ease, t);
             float value = Mathf.LerpUnclamped(from, to, reverse ? 1f - eased : eased);
             if (mode == UIPulseMode.Scale)
                 transform.localScale = Vector3.one * value;
@@ -82,7 +86,8 @@ namespace Zeraveene.BetterUGUI
         private void Update()
         {
             if (!playing) return;
-            elapsed = Mathf.Repeat(elapsed + Time.deltaTime, Mathf.Max(0.001f, duration) * 2f);
+            float cycleDuration = Mathf.Max(0.001f, duration) * (restart ? 1f : 2f);
+            elapsed = Mathf.Repeat(elapsed + Time.deltaTime, cycleDuration);
             EvaluatePreview(elapsed);
         }
 

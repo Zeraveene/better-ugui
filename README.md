@@ -58,4 +58,6 @@ Add **UI > Better uGUI > UI Pulse** for a repeating pulse. Choose **Alpha** (def
 
 Defaults: From 1, To 0.5, Duration 0.3 seconds per direction, InOutQuad easing with yoyo playback. Enable **Always Play** to start whenever the component is enabled in Play Mode, or call `bool Play()` / `bool Stop()` explicitly. Play restarts from From; Stop holds the current value. The inspector Play/Stop buttons also preview in Edit Mode and restore the original alpha and scale on stop or deselection.
 
-Both `UIAnimation` and `UIPulse` expose `bool PlayReverse()` and an inspector **Play Reverse** button. Reverse restarts at the configured To values and animates toward From with the same duration and easing, without modifying settings. UIPulse continues to yoyo from that reversed starting direction. `Play()` always restarts forward.
+Enable **Restart** to reset to the starting value after each pass. Choose the easing with **Ease**. For a repeating scale-up, set Mode to Scale, From to 0, To to 1, Duration to 0.3, Restart on and Ease to OutQuad.
+
+Both `UIAnimation` and `UIPulse` expose `bool PlayReverse()` and an inspector **Play Reverse** button. Reverse restarts at the configured To values and animates toward From with the same duration and easing, without modifying settings. UIPulse uses the selected restart or ping-pong behavior from that reversed starting direction. `Play()` always restarts forward.

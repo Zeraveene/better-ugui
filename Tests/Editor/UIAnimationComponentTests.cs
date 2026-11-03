@@ -75,5 +75,51 @@ namespace Zeraveene.BetterUGUI.Tests
             Assert.IsFalse(animation.EvaluatePreview(10f));
             Assert.AreEqual(new Vector2(30f, 20f), rect.anchoredPosition);
         }
+
+        [TestCase(UIPulseMode.Scale, false)]
+        [TestCase(UIPulseMode.Scale, true)]
+        [TestCase(UIPulseMode.Alpha, false)]
+        [TestCase(UIPulseMode.Alpha, true)]
+        public void PulseRestartRepeatsOutQuadEveryDuration(UIPulseMode mode, bool reverse)
+        {
+            go = new GameObject("Pulse Test", typeof(RectTransform), typeof(CanvasGroup));
+            var pulse = go.AddComponent<UIPulse>();
+            var settings = new SerializedObject(pulse);
+            settings.FindProperty("mode").enumValueIndex = (int)mode;
+            settings.FindProperty("from").floatValue = 0f;
+            settings.FindProperty("to").floatValue = 1f;
+            settings.FindProperty("duration").floatValue = 0.3f;
+            settings.FindProperty("restart").boolValue = true;
+            settings.FindProperty("ease").intValue = (int)Animation.UIEase.OutQuad;
+            settings.ApplyModifiedPropertiesWithoutUndo();
+
+            Assert.IsTrue(reverse ? pulse.PlayReverse() : pulse.Play());
+            foreach (float seconds in new[] { 0f, 0.15f, 0.3f, 0.45f, 0.6f, 0.75f })
+            {
+                Assert.IsTrue(pulse.EvaluatePreview(seconds));
+                float expected = seconds == 0f || seconds == 0.3f || seconds == 0.6f ? 0f : 0.75f;
+                if (reverse) expected = 1f - expected;
+                float actual = mode == UIPulseMode.Scale ? go.transform.localScale.x : go.GetComponent<CanvasGroup>().alpha;
+                Assert.AreEqual(expected, actual, 1e-4f, $"At {seconds} seconds");
+            }
+            Assert.IsTrue(pulse.Stop());
+            Assert.IsFalse(pulse.EvaluatePreview(1f));
+        }
+
+        [Test]
+        public void PulseDefaultsStillPingPongWithInOutQuad()
+        {
+            go = new GameObject("Pulse Test", typeof(CanvasGroup));
+            var pulse = go.AddComponent<UIPulse>();
+            var group = go.GetComponent<CanvasGroup>();
+            Assert.IsTrue(pulse.Play());
+            Assert.AreEqual(1f, group.alpha, 1e-4f);
+            pulse.EvaluatePreview(0.075f);
+            Assert.AreEqual(0.9375f, group.alpha, 1e-4f);
+            pulse.EvaluatePreview(0.3f);
+            Assert.AreEqual(0.5f, group.alpha, 1e-4f);
+            pulse.EvaluatePreview(0.6f);
+            Assert.AreEqual(1f, group.alpha, 1e-4f);
+        }
     }
 }

@@ -22,7 +22,6 @@ namespace Zeraveene.BetterUGUI.Editor
             if (serializedObject.FindProperty("mode").enumValueIndex == (int)UIPulseMode.Alpha &&
                 animation.GetComponent<CanvasGroup>() == null && animation.GetComponent<UnityEngine.UI.Graphic>() == null)
                 EditorGUILayout.HelpBox("Alpha requires a CanvasGroup or UI Graphic on this GameObject (including procedural UI).", MessageType.Info);
-            EditorGUILayout.LabelField("Easing", "InOutQuad (Yoyo)");
             using (new EditorGUILayout.HorizontalScope())
             {
                 if (GUILayout.Button("Play"))
