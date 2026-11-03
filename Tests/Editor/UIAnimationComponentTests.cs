@@ -202,6 +202,62 @@ namespace Zeraveene.BetterUGUI.Tests
             Assert.AreEqual(Vector3.one, go.transform.localScale);
         }
 
+        [TestCase(true, false, false)]
+        [TestCase(false, true, false)]
+        [TestCase(true, true, false)]
+        [TestCase(true, false, true)]
+        [TestCase(false, true, true)]
+        [TestCase(true, true, true)]
+        public void SizeAnimatesActualDimensionsWithStretchedAnchors(bool width, bool height, bool reverse)
+        {
+            var animation = Create(typeof(RectTransform));
+            var parent = (RectTransform)go.transform;
+            parent.sizeDelta = new Vector2(500f, 400f);
+            var child = new GameObject("Size Target", typeof(RectTransform));
+            child.transform.SetParent(parent, false);
+            var rect = (RectTransform)child.transform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.sizeDelta = Vector2.zero;
+            Set(animation, so =>
+            {
+                so.FindProperty("fadeEnabled").boolValue = false;
+                so.FindProperty("sizeEnabled").boolValue = true;
+                so.FindProperty("sizeTarget").objectReferenceValue = rect;
+                so.FindProperty("widthEnabled").boolValue = width;
+                so.FindProperty("heightEnabled").boolValue = height;
+                so.FindProperty("widthFrom").floatValue = 100f;
+                so.FindProperty("widthTo").floatValue = 300f;
+                so.FindProperty("heightFrom").floatValue = 60f;
+                so.FindProperty("heightTo").floatValue = 160f;
+                so.FindProperty("sizeDuration").floatValue = 0.4f;
+            });
+            Assert.IsTrue(reverse ? animation.PlayReverse() : animation.Play());
+            Assert.AreEqual(width ? (reverse ? 300f : 100f) : 500f, rect.rect.width, 1e-4f);
+            Assert.AreEqual(height ? (reverse ? 160f : 60f) : 400f, rect.rect.height, 1e-4f);
+            Assert.IsTrue(animation.EvaluatePreview(0.2f));
+            Assert.AreEqual(width ? (reverse ? 150f : 250f) : 500f, rect.rect.width, 1e-4f);
+            Assert.AreEqual(height ? (reverse ? 85f : 135f) : 400f, rect.rect.height, 1e-4f);
+            Assert.IsFalse(animation.EvaluatePreview(0.4f));
+            Assert.AreEqual(width ? (reverse ? 100f : 300f) : 500f, rect.rect.width, 1e-4f);
+            Assert.AreEqual(height ? (reverse ? 60f : 160f) : 400f, rect.rect.height, 1e-4f);
+            Assert.AreEqual(Vector2.zero, rect.anchorMin);
+            Assert.AreEqual(Vector2.one, rect.anchorMax);
+            Assert.AreEqual(new Vector2(500f, 400f), parent.rect.size);
+        }
+
+        [Test]
+        public void SizeRequiresARectTransform()
+        {
+            var animation = Create();
+            Set(animation, so =>
+            {
+                so.FindProperty("fadeEnabled").boolValue = false;
+                so.FindProperty("sizeEnabled").boolValue = true;
+            });
+            Assert.IsFalse(animation.Play());
+        }
+
         [TestCase(UIPulseMode.Scale, false)]
         [TestCase(UIPulseMode.Scale, true)]
         [TestCase(UIPulseMode.Alpha, false)]

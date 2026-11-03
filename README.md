@@ -16,7 +16,7 @@ Reusable extensions for Unity uGUI by Zeraveene.
 In Unity, open **Window > Package Manager > + > Install package from git URL** and enter:
 
 ```text
-https://github.com/zeraveene/better-ugui.git#v0.1.1
+https://github.com/zeraveene/better-ugui.git#v0.1.2
 ```
 
 Requires Unity 6000.0+ and uGUI 2.0.0. Private repository access requires Git authentication on each machine. Commit your project's `Packages/manifest.json` and `Packages/packages-lock.json` so other machines can restore the same package version.
@@ -52,7 +52,9 @@ Add **UI > Better uGUI > UI Animation** and assign **Fade Target**, **Scale Targ
 
 For entry and exit, configure From as the hidden state and To as the visible state. Call `Play()` for entry and `PlayReverse()` for exit. Separate UIAnimation components on controller objects can target the same panel when entry and exit need different settings. Activate the panel before entry and keep the controller enabled throughout playback.
 
-The UI Toolkit inspector groups Fade, Scale and Position into boxed foldouts with independent enable switches. In Scale, enable **Separate Axes** to edit XYZ From/To values, for example `(0, 1, 1)` to `(1, 1, 1)` for a horizontal reveal. With Separate Axes off, Scale uses the original uniform From/To values.
+The UI Toolkit inspector groups Fade, Scale, Position and Size into boxed foldouts with independent enable switches. In Scale, enable **Separate Axes** to edit XYZ From/To values, for example `(0, 1, 1)` to `(1, 1, 1)` for a horizontal reveal. With Separate Axes off, Scale uses the original uniform From/To values.
+
+**Size** animates actual RectTransform width and height in local UI units, including stretched anchors. Assign **Size Target** or leave it empty to use this object's RectTransform. Enable **Animate Width**, **Animate Height**, or both, set their From/To values and a shared Duration. It supports OutQuad easing, Play Reverse and preview restoration. A Layout Group or Content Size Fitter controlling those dimensions can override the animated size.
 
 Call `bool Play()` to restart from the configured values and `bool Stop()` to stop at the current values. Play returns false when disabled or no channel can run; Stop returns whether it interrupted playback. Playback is explicit, with no events or automatic playback. Edit Mode Stop/deselect restores the original values.
 

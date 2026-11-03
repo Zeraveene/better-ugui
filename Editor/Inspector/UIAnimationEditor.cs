@@ -12,6 +12,8 @@ namespace Zeraveene.BetterUGUI.Editor
         private bool preview;
         private double started;
         private Transform previewScaleTarget, previewPositionTarget;
+        private RectTransform previewSizeTarget;
+        private Vector2 originalSizeDelta;
         private Vector3 originalScale, originalLocalPosition;
         private Vector2 originalAnchoredPosition;
         private CanvasGroup group;
@@ -63,6 +65,14 @@ namespace Zeraveene.BetterUGUI.Editor
             position.Add(Field("positionTo", "To"));
             position.Add(Field("positionDuration", "Duration (s)"));
 
+            var size = AddChannel(root, "Size", "size");
+            size.Add(Field("sizeTarget", "Size Target"));
+            AddSizeAxis(size, "width", "Width");
+            AddSizeAxis(size, "height", "Height");
+            size.Add(Field("sizeDuration", "Duration (s)"));
+            var sizeWarning = new HelpBox("Size needs a RectTransform on Size Target or this GameObject.", HelpBoxMessageType.Info);
+            size.Add(sizeWarning);
+
             var easing = new Label("Easing · OutQuad");
             easing.AddToClassList("animation-hint");
             root.Add(easing);
@@ -82,6 +92,7 @@ namespace Zeraveene.BetterUGUI.Editor
                 var animation = (AnimationComponent)target;
                 animation.ResolveFadeTarget(out var fadeGroup, out var fadeGraphic);
                 warning.EnableInClassList("hidden", fadeGroup != null || fadeGraphic != null);
+                sizeWarning.EnableInClassList("hidden", animation.ResolveSizeTarget() != null);
             }
             RefreshWarning();
             root.TrackSerializedObjectValue(serializedObject, _ =>
@@ -128,6 +139,18 @@ namespace Zeraveene.BetterUGUI.Editor
             return content;
         }
 
+        private void AddSizeAxis(VisualElement parent, string prefix, string label)
+        {
+            parent.Add(Field(prefix + "Enabled", "Animate " + label));
+            var values = new VisualElement();
+            values.Add(Field(prefix + "From", "From " + label));
+            values.Add(Field(prefix + "To", "To " + label));
+            var enabled = serializedObject.FindProperty(prefix + "Enabled");
+            values.SetEnabled(enabled.boolValue);
+            values.TrackPropertyValue(enabled, property => values.SetEnabled(property.boolValue));
+            parent.Add(values);
+        }
+
         private void Play(bool reverse)
         {
             var animation = (AnimationComponent)target;
@@ -141,6 +164,8 @@ namespace Zeraveene.BetterUGUI.Editor
             StopPreview();
             previewScaleTarget = animation.ResolveScaleTarget();
             previewPositionTarget = animation.ResolvePositionTarget();
+            previewSizeTarget = serializedObject.FindProperty("sizeEnabled").boolValue ? animation.ResolveSizeTarget() : null;
+            if (previewSizeTarget != null) originalSizeDelta = previewSizeTarget.sizeDelta;
             originalScale = previewScaleTarget.localScale;
             originalLocalPosition = previewPositionTarget.localPosition;
             if (previewPositionTarget is RectTransform rect) originalAnchoredPosition = rect.anchoredPosition;
@@ -173,6 +198,7 @@ namespace Zeraveene.BetterUGUI.Editor
             if (animation != null)
                 animation.Stop();
             if (previewScaleTarget != null) previewScaleTarget.localScale = originalScale;
+            if (previewSizeTarget != null) previewSizeTarget.sizeDelta = originalSizeDelta;
             if (previewPositionTarget != null)
             {
                 if (previewPositionTarget is RectTransform rect) rect.anchoredPosition = originalAnchoredPosition;
@@ -180,6 +206,7 @@ namespace Zeraveene.BetterUGUI.Editor
             }
             previewScaleTarget = null;
             previewPositionTarget = null;
+            previewSizeTarget = null;
             if (group != null) group.alpha = originalAlpha;
             if (graphic != null) graphic.color = originalColor;
             SceneView.RepaintAll();

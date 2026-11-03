@@ -3,6 +3,12 @@
 All notable changes to this package are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the package uses [Semantic Versioning](https://semver.org/).
 
+## [0.1.2] - 2026-11-03
+
+### Added
+- UIAnimation Size foldout with its own RectTransform target, independent width/height switches and From/To values, and duration. Actual dimensions animate correctly with stretched anchors.
+- Size supports forward/reverse playback and restores the original size after editor preview.
+
 ## [0.1.1] - 2026-11-03
 
 ### Fixed

@@ -34,13 +34,24 @@ namespace Zeraveene.BetterUGUI
         private Vector2 positionFrom = new Vector2(0f, -50f);
         [SerializeField] private Vector2 positionTo = Vector2.zero;
         [SerializeField, Min(0f)] private float positionDuration = 0.3f;
+        [SerializeField] private bool sizeEnabled;
+        [SerializeField, Tooltip("RectTransform to resize. Empty uses this object's RectTransform. Values are width and height in local UI units.")]
+        private RectTransform sizeTarget;
+        [SerializeField] private bool widthEnabled = true;
+        [SerializeField, Min(0f)] private float widthFrom = 100f;
+        [SerializeField, Min(0f)] private float widthTo = 100f;
+        [SerializeField] private bool heightEnabled = true;
+        [SerializeField, Min(0f)] private float heightFrom = 100f;
+        [SerializeField, Min(0f)] private float heightTo = 100f;
+        [SerializeField, Min(0f)] private float sizeDuration = 0.3f;
 
         private CanvasGroup group;
         private Transform playbackScaleTarget, playbackPositionTarget;
+        private RectTransform playbackSizeTarget;
         private Graphic graphic;
         private UIAnimationHandle handle;
         private float duration;
-        private bool playing, animateFade, animateScale, animatePosition;
+        private bool playing, animateFade, animateScale, animatePosition, animateSize;
 
         private bool reverse;
 
@@ -57,13 +68,16 @@ namespace Zeraveene.BetterUGUI
             if (!isActiveAndEnabled) return false;
             playbackScaleTarget = ResolveScaleTarget();
             playbackPositionTarget = ResolvePositionTarget();
+            playbackSizeTarget = ResolveSizeTarget();
             ResolveFadeTarget(out group, out graphic);
             animateFade = fadeEnabled && (group != null || graphic != null);
             animateScale = scaleEnabled;
             animatePosition = positionEnabled;
-            if (!animateFade && !animateScale && !animatePosition) return false;
-            duration = Mathf.Max(animateFade ? fadeDuration : 0f,
-                Mathf.Max(animateScale ? scaleDuration : 0f, animatePosition ? positionDuration : 0f));
+            animateSize = sizeEnabled && playbackSizeTarget != null && (widthEnabled || heightEnabled);
+            if (!animateFade && !animateScale && !animatePosition && !animateSize) return false;
+            duration = Mathf.Max(
+                Mathf.Max(animateFade ? fadeDuration : 0f, animateScale ? scaleDuration : 0f),
+                Mathf.Max(animatePosition ? positionDuration : 0f, animateSize ? sizeDuration : 0f));
             playing = true;
             EvaluatePreview(0f);
             if (Application.isPlaying && playing)
@@ -105,6 +119,8 @@ namespace Zeraveene.BetterUGUI
             return posTarget != null ? posTarget : transform;
         }
 
+        internal RectTransform ResolveSizeTarget() => sizeTarget != null ? sizeTarget : transform as RectTransform;
+
         /// <summary>The assigned CanvasGroup/Graphic, or components on the assigned object, falling back to this GameObject when empty.</summary>
         internal void ResolveFadeTarget(out CanvasGroup canvasGroup, out Graphic fadeGraphic)
         {
@@ -123,7 +139,8 @@ namespace Zeraveene.BetterUGUI
             animateFade &= group != null || graphic != null;
             animateScale &= playbackScaleTarget != null;
             animatePosition &= playbackPositionTarget != null;
-            if (!animateFade && !animateScale && !animatePosition)
+            animateSize &= playbackSizeTarget != null;
+            if (!animateFade && !animateScale && !animatePosition && !animateSize)
             {
                 Stop();
                 return false;
@@ -144,6 +161,16 @@ namespace Zeraveene.BetterUGUI
                 Vector3 from = separateScaleAxes ? scaleFromXYZ : Vector3.one * scaleFrom;
                 Vector3 to = separateScaleAxes ? scaleToXYZ : Vector3.one * scaleTo;
                 playbackScaleTarget.localScale = Vector3.LerpUnclamped(from, to, Progress(elapsed, scaleDuration));
+            }
+            if (animateSize)
+            {
+                float progress = Progress(elapsed, sizeDuration);
+                if (widthEnabled)
+                    playbackSizeTarget.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal,
+                        Mathf.Max(0f, Mathf.LerpUnclamped(widthFrom, widthTo, progress)));
+                if (heightEnabled)
+                    playbackSizeTarget.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical,
+                        Mathf.Max(0f, Mathf.LerpUnclamped(heightFrom, heightTo, progress)));
             }
             if (animatePosition)
             {
@@ -172,6 +199,11 @@ namespace Zeraveene.BetterUGUI
             Vector2 current = transform is RectTransform rect ? rect.anchoredPosition : (Vector2)transform.localPosition;
             positionTo = current;
             positionFrom = current + new Vector2(0f, -50f);
+            if (transform is RectTransform sizeRect)
+            {
+                widthFrom = widthTo = sizeRect.rect.width;
+                heightFrom = heightTo = sizeRect.rect.height;
+            }
         }
 
         private void OnValidate() => MigrateLegacyTarget();
