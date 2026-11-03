@@ -39,6 +39,10 @@ public sealed class ProceduralShapeOutline : MaskableGraphic
     private ProceduralShapeGraphic _subscribedSource;
     private ProceduralShapeImage _subscribedImageSource;
     private ProceduralShapeOutline _subscribedOutlineSource;
+    private bool _hasTransformState;
+    private int _sourceTransformId;
+    private Matrix4x4 _sourceToLocal;
+    private float _localPixelSize;
 
     // Reused every rebuild so populating the mesh allocates nothing.
     private readonly List<Vector2> _inward = new List<Vector2>(32);
@@ -194,11 +198,15 @@ public sealed class ProceduralShapeOutline : MaskableGraphic
         base.OnEnable();
         TryAssignSourceFromParent();
         RefreshSubscription();
+        _hasTransformState = false;
+        Canvas.preWillRenderCanvases += RefreshTransformGeometry;
         SetVerticesDirty();
     }
 
     protected override void OnDisable()
     {
+        Canvas.preWillRenderCanvases -= RefreshTransformGeometry;
+        _hasTransformState = false;
         Unsubscribe();
         base.OnDisable();
     }
@@ -294,6 +302,29 @@ public sealed class ProceduralShapeOutline : MaskableGraphic
     #endregion
 
     #region Private Methods
+
+    private void RefreshTransformGeometry()
+    {
+        Transform sourceTransform = _outlineSource != null ? _outlineSource.transform
+            : _source != null ? _source.transform
+            : _imageSource != null ? _imageSource.transform : null;
+        int sourceId = sourceTransform != null ? sourceTransform.GetInstanceID() : 0;
+        Matrix4x4 sourceToLocal = sourceTransform != null
+            ? rectTransform.worldToLocalMatrix * sourceTransform.localToWorldMatrix
+            : Matrix4x4.identity;
+        float localPixelSize = GetLocalPixels(1f);
+        if (_hasTransformState && _sourceTransformId == sourceId &&
+            _sourceToLocal == sourceToLocal && _localPixelSize == localPixelSize)
+            return;
+
+        _hasTransformState = true;
+        _sourceTransformId = sourceId;
+        _sourceToLocal = sourceToLocal;
+        _localPixelSize = localPixelSize;
+        // Transform changes do not raise the source's GeometryChanged event.
+        // Invalidate before uGUI rebuilds, including any outlines sourced from this one.
+        GeometryWasChanged();
+    }
 
     // Builds the outline on the selected side of the source perimeter. Offset moves
     // the complete ring farther in that direction before thickness is applied.

@@ -3,6 +3,12 @@
 All notable changes to this package are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the package uses [Semantic Versioning](https://semver.org/).
 
+## [4.2.10] - 2026-11-03
+
+### Fixed
+- ProceduralShapeOutline refreshes before canvas rendering when its source-to-outline transform or pixel conversion changes. Scale and position animations, including animations starting at zero scale, no longer require an editor nudge to refresh the outline.
+- Transform invalidation propagates through chained outlines and stops when the outline is disabled. Unchanged transforms reuse the existing mesh.
+
 ## [4.2.9] - 2026-11-03
 
 ### Changed
