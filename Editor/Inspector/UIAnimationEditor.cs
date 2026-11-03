@@ -11,7 +11,7 @@ namespace Zeraveene.BetterUGUI.Editor
     {
         private bool preview;
         private double started;
-        private Transform previewTarget;
+        private Transform previewScaleTarget, previewPositionTarget;
         private Vector3 originalScale, originalLocalPosition;
         private Vector2 originalAnchoredPosition;
         private CanvasGroup group;
@@ -28,16 +28,16 @@ namespace Zeraveene.BetterUGUI.Editor
             var stylesheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(stylesheetPath);
             if (stylesheet != null) root.styleSheets.Add(stylesheet);
 
-            root.Add(Field("animationTarget", "Target"));
             var fade = AddChannel(root, "Fade", "fade");
             fade.Add(Field("fadeTarget", "Fade Target"));
             fade.Add(Field("fadeFrom", "From"));
             fade.Add(Field("fadeTo", "To"));
             fade.Add(Field("fadeDuration", "Duration (s)"));
-            var warning = new HelpBox("Assign a CanvasGroup or Graphic to Fade Target, or add one to the animation Target.", HelpBoxMessageType.Info);
+            var warning = new HelpBox("Fade Target needs a CanvasGroup or Graphic. When empty, this GameObject is used.", HelpBoxMessageType.Info);
             fade.Add(warning);
 
             var scale = AddChannel(root, "Scale", "scale");
+            scale.Add(Field("scaleTarget", "Scale Target"));
             scale.Add(Field("separateScaleAxes", "Separate Axes"));
             var uniformScale = new VisualElement();
             uniformScale.Add(Field("scaleFrom", "From"));
@@ -58,6 +58,7 @@ namespace Zeraveene.BetterUGUI.Editor
             root.TrackPropertyValue(axesProperty, UpdateScaleFields);
 
             var position = AddChannel(root, "Position", "position");
+            position.Add(Field("posTarget", "Position Target"));
             position.Add(Field("positionFrom", "From"));
             position.Add(Field("positionTo", "To"));
             position.Add(Field("positionDuration", "Duration (s)"));
@@ -138,10 +139,11 @@ namespace Zeraveene.BetterUGUI.Editor
         private void StartPreview(AnimationComponent animation, bool reverse = false)
         {
             StopPreview();
-            previewTarget = animation.ResolveAnimationTarget();
-            originalScale = previewTarget.localScale;
-            originalLocalPosition = previewTarget.localPosition;
-            if (previewTarget is RectTransform rect) originalAnchoredPosition = rect.anchoredPosition;
+            previewScaleTarget = animation.ResolveScaleTarget();
+            previewPositionTarget = animation.ResolvePositionTarget();
+            originalScale = previewScaleTarget.localScale;
+            originalLocalPosition = previewPositionTarget.localPosition;
+            if (previewPositionTarget is RectTransform rect) originalAnchoredPosition = rect.anchoredPosition;
             animation.ResolveFadeTarget(out group, out graphic);
             if (group != null) originalAlpha = group.alpha;
             if (graphic != null) originalColor = graphic.color;
@@ -170,13 +172,14 @@ namespace Zeraveene.BetterUGUI.Editor
             var animation = target as AnimationComponent;
             if (animation != null)
                 animation.Stop();
-            if (previewTarget != null)
+            if (previewScaleTarget != null) previewScaleTarget.localScale = originalScale;
+            if (previewPositionTarget != null)
             {
-                previewTarget.localScale = originalScale;
-                if (previewTarget is RectTransform rect) rect.anchoredPosition = originalAnchoredPosition;
-                else previewTarget.localPosition = originalLocalPosition;
+                if (previewPositionTarget is RectTransform rect) rect.anchoredPosition = originalAnchoredPosition;
+                else previewPositionTarget.localPosition = originalLocalPosition;
             }
-            previewTarget = null;
+            previewScaleTarget = null;
+            previewPositionTarget = null;
             if (group != null) group.alpha = originalAlpha;
             if (graphic != null) graphic.color = originalColor;
             SceneView.RepaintAll();

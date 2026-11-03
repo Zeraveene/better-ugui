@@ -8,15 +8,18 @@ namespace Zeraveene.BetterUGUI
     [AddComponentMenu("UI/Better uGUI/UI Animation")]
     public sealed class UIAnimation : MonoBehaviour, IUIAnimationReceiver
     {
-        [SerializeField, Tooltip("Object to animate. Empty uses this component's Transform.")]
+        // Retained only to migrate shared targets saved by versions 4.2.7 and 4.2.8.
+        [SerializeField, HideInInspector]
         private Transform animationTarget;
         [SerializeField] private bool fadeEnabled = true;
-        [SerializeField, Tooltip("CanvasGroup or Graphic (ProceduralShape, Image, RawImage, ...). Empty uses the animation target's CanvasGroup, then Graphic.")]
+        [SerializeField, Tooltip("CanvasGroup, Graphic, or a component on the object to fade. Empty uses this GameObject's CanvasGroup, then Graphic.")]
         private Component fadeTarget;
         [SerializeField, Range(0f, 1f)] private float fadeFrom = 1f;
         [SerializeField, Range(0f, 1f)] private float fadeTo = 0f;
         [SerializeField, Min(0f)] private float fadeDuration = 0.3f;
         [SerializeField] private bool scaleEnabled;
+        [SerializeField, Tooltip("Transform to scale. Empty uses this component's Transform.")]
+        private Transform scaleTarget;
         [SerializeField, Tooltip("Animate X, Y and Z independently instead of using one uniform scale.")]
         private bool separateScaleAxes;
         [SerializeField] private float scaleFrom = 1f;
@@ -25,13 +28,15 @@ namespace Zeraveene.BetterUGUI
         [SerializeField] private Vector3 scaleToXYZ = Vector3.one * 1.3f;
         [SerializeField, Min(0f)] private float scaleDuration = 0.3f;
         [SerializeField] private bool positionEnabled;
+        [SerializeField, Tooltip("Transform to move. Empty uses this component's Transform.")]
+        private Transform posTarget;
         [SerializeField, Tooltip("Anchored position (RectTransform) or local position.")]
         private Vector2 positionFrom = new Vector2(0f, -50f);
         [SerializeField] private Vector2 positionTo = Vector2.zero;
         [SerializeField, Min(0f)] private float positionDuration = 0.3f;
 
         private CanvasGroup group;
-        private Transform playbackTarget;
+        private Transform playbackScaleTarget, playbackPositionTarget;
         private Graphic graphic;
         private UIAnimationHandle handle;
         private float duration;
@@ -50,7 +55,8 @@ namespace Zeraveene.BetterUGUI
             Stop();
             reverse = playReverse;
             if (!isActiveAndEnabled) return false;
-            playbackTarget = ResolveAnimationTarget();
+            playbackScaleTarget = ResolveScaleTarget();
+            playbackPositionTarget = ResolvePositionTarget();
             ResolveFadeTarget(out group, out graphic);
             animateFade = fadeEnabled && (group != null || graphic != null);
             animateScale = scaleEnabled;
@@ -78,15 +84,35 @@ namespace Zeraveene.BetterUGUI
             return wasPlaying;
         }
 
-        internal Transform ResolveAnimationTarget() => animationTarget != null ? animationTarget : transform;
+        private void MigrateLegacyTarget()
+        {
+            if (animationTarget == null) return;
+            scaleTarget = animationTarget;
+            posTarget = animationTarget;
+            if (fadeTarget == null) fadeTarget = animationTarget;
+            animationTarget = null;
+        }
 
-        /// <summary>The assigned CanvasGroup/Graphic, else the animation target's CanvasGroup, then Graphic.</summary>
+        internal Transform ResolveScaleTarget()
+        {
+            MigrateLegacyTarget();
+            return scaleTarget != null ? scaleTarget : transform;
+        }
+
+        internal Transform ResolvePositionTarget()
+        {
+            MigrateLegacyTarget();
+            return posTarget != null ? posTarget : transform;
+        }
+
+        /// <summary>The assigned CanvasGroup/Graphic, or components on the assigned object, falling back to this GameObject when empty.</summary>
         internal void ResolveFadeTarget(out CanvasGroup canvasGroup, out Graphic fadeGraphic)
         {
+            MigrateLegacyTarget();
             canvasGroup = fadeTarget as CanvasGroup;
             fadeGraphic = fadeTarget as Graphic;
             if (canvasGroup != null || fadeGraphic != null) return;
-            Transform target = ResolveAnimationTarget();
+            Component target = fadeTarget != null ? fadeTarget : transform;
             canvasGroup = target.GetComponent<CanvasGroup>();
             if (canvasGroup == null) fadeGraphic = target.GetComponent<Graphic>();
         }
@@ -94,7 +120,10 @@ namespace Zeraveene.BetterUGUI
         internal bool EvaluatePreview(float elapsed)
         {
             if (!playing) return false;
-            if (playbackTarget == null)
+            animateFade &= group != null || graphic != null;
+            animateScale &= playbackScaleTarget != null;
+            animatePosition &= playbackPositionTarget != null;
+            if (!animateFade && !animateScale && !animatePosition)
             {
                 Stop();
                 return false;
@@ -114,13 +143,13 @@ namespace Zeraveene.BetterUGUI
             {
                 Vector3 from = separateScaleAxes ? scaleFromXYZ : Vector3.one * scaleFrom;
                 Vector3 to = separateScaleAxes ? scaleToXYZ : Vector3.one * scaleTo;
-                playbackTarget.localScale = Vector3.LerpUnclamped(from, to, Progress(elapsed, scaleDuration));
+                playbackScaleTarget.localScale = Vector3.LerpUnclamped(from, to, Progress(elapsed, scaleDuration));
             }
             if (animatePosition)
             {
                 Vector2 position = Vector2.LerpUnclamped(positionFrom, positionTo, Progress(elapsed, positionDuration));
-                if (playbackTarget is RectTransform rect) rect.anchoredPosition = position;
-                else playbackTarget.localPosition = new Vector3(position.x, position.y, playbackTarget.localPosition.z);
+                if (playbackPositionTarget is RectTransform rect) rect.anchoredPosition = position;
+                else playbackPositionTarget.localPosition = new Vector3(position.x, position.y, playbackPositionTarget.localPosition.z);
             }
             if (elapsed >= duration) playing = false;
             return playing;
@@ -145,11 +174,6 @@ namespace Zeraveene.BetterUGUI
             positionFrom = current + new Vector2(0f, -50f);
         }
 
-        private void OnValidate()
-        {
-            if (fadeTarget == null || fadeTarget is CanvasGroup || fadeTarget is Graphic) return;
-            Component group = fadeTarget.GetComponent<CanvasGroup>();
-            fadeTarget = group != null ? group : fadeTarget.GetComponent<Graphic>();
-        }
+        private void OnValidate() => MigrateLegacyTarget();
     }
 }

@@ -78,7 +78,7 @@ namespace Zeraveene.BetterUGUI.Tests
 
         [TestCase(false)]
         [TestCase(true)]
-        public void AnimationDrivesAssignedTargetForEntryAndExit(bool reverse)
+        public void LegacySharedTargetPreservesEntryAndExit(bool reverse)
         {
             var animation = Create(typeof(RectTransform), typeof(CanvasGroup));
             var target = new GameObject("Animation Target", typeof(RectTransform), typeof(CanvasGroup));
@@ -106,6 +106,58 @@ namespace Zeraveene.BetterUGUI.Tests
             Assert.AreEqual(Vector3.one, go.transform.localScale);
             Assert.AreEqual(Vector2.zero, ((RectTransform)go.transform).anchoredPosition);
             Assert.AreEqual(1f, go.GetComponent<CanvasGroup>().alpha);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void ChannelsAnimateIndependentTargets(bool reverse)
+        {
+            var animation = Create(typeof(RectTransform), typeof(CanvasGroup));
+            var scale = new GameObject("Scale Target", typeof(RectTransform));
+            var position = new GameObject("Position Target", typeof(RectTransform));
+            var fade = new GameObject("Fade Target", typeof(CanvasGroup));
+            scale.transform.SetParent(go.transform, false);
+            position.transform.SetParent(go.transform, false);
+            fade.transform.SetParent(go.transform, false);
+            Set(animation, so =>
+            {
+                so.FindProperty("scaleTarget").objectReferenceValue = scale.transform;
+                so.FindProperty("posTarget").objectReferenceValue = position.transform;
+                so.FindProperty("fadeTarget").objectReferenceValue = fade.GetComponent<CanvasGroup>();
+                so.FindProperty("scaleEnabled").boolValue = true;
+                so.FindProperty("positionEnabled").boolValue = true;
+            });
+
+            Assert.IsTrue(reverse ? animation.PlayReverse() : animation.Play());
+            animation.EvaluatePreview(1f);
+            Assert.AreEqual(Vector3.one * (reverse ? 1f : 1.3f), scale.transform.localScale);
+            Assert.AreEqual(reverse ? new Vector2(0f, -50f) : Vector2.zero, ((RectTransform)position.transform).anchoredPosition);
+            Assert.AreEqual(reverse ? 1f : 0f, fade.GetComponent<CanvasGroup>().alpha);
+            Assert.AreEqual(Vector3.one, position.transform.localScale);
+            Assert.AreEqual(Vector2.zero, ((RectTransform)scale.transform).anchoredPosition);
+            Assert.AreEqual(Vector3.one, go.transform.localScale);
+            Assert.AreEqual(Vector2.zero, ((RectTransform)go.transform).anchoredPosition);
+            Assert.AreEqual(1f, go.GetComponent<CanvasGroup>().alpha);
+        }
+
+        [Test]
+        public void DestroyedScaleTargetDoesNotStopPositionChannel()
+        {
+            var animation = Create(typeof(RectTransform));
+            var scale = new GameObject("Scale Target");
+            scale.transform.SetParent(go.transform, false);
+            Set(animation, so =>
+            {
+                so.FindProperty("scaleTarget").objectReferenceValue = scale.transform;
+                so.FindProperty("scaleEnabled").boolValue = true;
+                so.FindProperty("positionEnabled").boolValue = true;
+            });
+            animation.Play();
+            Object.DestroyImmediate(scale);
+            Assert.IsTrue(animation.EvaluatePreview(0.15f));
+            Assert.AreEqual(new Vector2(0f, -12.5f), ((RectTransform)go.transform).anchoredPosition);
+            Assert.IsFalse(animation.EvaluatePreview(1f));
+            Assert.AreEqual(Vector2.zero, ((RectTransform)go.transform).anchoredPosition);
         }
 
         [TestCase(false)]

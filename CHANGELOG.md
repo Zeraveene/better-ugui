@@ -3,6 +3,13 @@
 All notable changes to this package are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the package uses [Semantic Versioning](https://semver.org/).
 
+## [4.2.9] - 2026-11-03
+
+### Changed
+- UIAnimation uses independent Fade Target, Scale Target and Position Target fields inside their channel foldouts. Empty targets use the attached object.
+- Shared targets saved by 4.2.7 and 4.2.8 are migrated to channel targets, preserving explicit Fade Target assignments.
+- Preview restores each target separately. Destroying one channel's target allows the remaining channels to finish.
+
 ## [4.2.8] - 2026-11-03
 
 ### Added

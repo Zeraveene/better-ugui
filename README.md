@@ -48,7 +48,7 @@ This repository contains the UPM package at its root; it is not a Unity project.
 
 ### Simple UI animation
 
-Add **UI > Better uGUI > UI Animation** and assign **Target** to the object to animate, or leave it empty to animate the attached object. Enable Fade, Scale and/or Position in their foldout checkboxes, set From/To and Duration, then press Play to preview. Fade uses the target's CanvasGroup or Graphic (CanvasGroup takes priority), with an optional **Fade Target** override. Defaults are fade 1 → 0, uniform scale 1 → 1.3, 0.3 seconds each and OutQuad easing. Channels play together with independent durations.
+Add **UI > Better uGUI > UI Animation** and assign **Fade Target**, **Scale Target** and **Position Target** inside their respective foldouts. Each channel uses its own target, or the attached object when its target is empty. Fade accepts a CanvasGroup or Graphic, or resolves those components on the assigned object (CanvasGroup takes priority). Enable the channels, set From/To and Duration, then press Play to preview. Defaults are fade 1 → 0, uniform scale 1 → 1.3, 0.3 seconds each and OutQuad easing. Channels play together with independent durations. Shared targets saved by versions 4.2.7 and 4.2.8 are migrated automatically, preserving any explicit Fade Target.
 
 For entry and exit, configure From as the hidden state and To as the visible state. Call `Play()` for entry and `PlayReverse()` for exit. Separate UIAnimation components on controller objects can target the same panel when entry and exit need different settings. Activate the panel before entry and keep the controller enabled throughout playback.
 
