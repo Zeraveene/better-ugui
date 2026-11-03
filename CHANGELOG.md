@@ -3,6 +3,12 @@
 All notable changes to this package are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the package uses [Semantic Versioning](https://semver.org/).
 
+## [0.1.0] - 2026-11-03
+
+### Changed
+- Restarted package versioning at 0.1.0 to reflect pre-1.0 development, carrying forward all features and fixes through 4.2.10. Future development releases use 0.x versions.
+- Updated the installation URL to v0.1.0. Earlier release tags remain available for existing package references.
+
 ## [4.2.10] - 2026-11-03
 
 ### Fixed
