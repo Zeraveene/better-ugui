@@ -8,8 +8,10 @@ namespace Zeraveene.BetterUGUI
     [AddComponentMenu("UI/Better uGUI/UI Animation")]
     public sealed class UIAnimation : MonoBehaviour, IUIAnimationReceiver
     {
+        [SerializeField, Tooltip("Object to animate. Empty uses this component's Transform.")]
+        private Transform animationTarget;
         [SerializeField] private bool fadeEnabled = true;
-        [SerializeField, Tooltip("CanvasGroup or Graphic (ProceduralShape, Image, RawImage, ...). Empty uses this GameObject's CanvasGroup, then Graphic.")]
+        [SerializeField, Tooltip("CanvasGroup or Graphic (ProceduralShape, Image, RawImage, ...). Empty uses the animation target's CanvasGroup, then Graphic.")]
         private Component fadeTarget;
         [SerializeField, Range(0f, 1f)] private float fadeFrom = 1f;
         [SerializeField, Range(0f, 1f)] private float fadeTo = 0f;
@@ -25,6 +27,7 @@ namespace Zeraveene.BetterUGUI
         [SerializeField, Min(0f)] private float positionDuration = 0.3f;
 
         private CanvasGroup group;
+        private Transform playbackTarget;
         private Graphic graphic;
         private UIAnimationHandle handle;
         private float duration;
@@ -43,6 +46,7 @@ namespace Zeraveene.BetterUGUI
             Stop();
             reverse = playReverse;
             if (!isActiveAndEnabled) return false;
+            playbackTarget = ResolveAnimationTarget();
             ResolveFadeTarget(out group, out graphic);
             animateFade = fadeEnabled && (group != null || graphic != null);
             animateScale = scaleEnabled;
@@ -70,19 +74,27 @@ namespace Zeraveene.BetterUGUI
             return wasPlaying;
         }
 
-        /// <summary>The fade target: the assigned CanvasGroup/Graphic, else this GameObject's CanvasGroup, then Graphic.</summary>
+        internal Transform ResolveAnimationTarget() => animationTarget != null ? animationTarget : transform;
+
+        /// <summary>The assigned CanvasGroup/Graphic, else the animation target's CanvasGroup, then Graphic.</summary>
         internal void ResolveFadeTarget(out CanvasGroup canvasGroup, out Graphic fadeGraphic)
         {
             canvasGroup = fadeTarget as CanvasGroup;
             fadeGraphic = fadeTarget as Graphic;
             if (canvasGroup != null || fadeGraphic != null) return;
-            canvasGroup = GetComponent<CanvasGroup>();
-            if (canvasGroup == null) fadeGraphic = GetComponent<Graphic>();
+            Transform target = ResolveAnimationTarget();
+            canvasGroup = target.GetComponent<CanvasGroup>();
+            if (canvasGroup == null) fadeGraphic = target.GetComponent<Graphic>();
         }
 
         internal bool EvaluatePreview(float elapsed)
         {
             if (!playing) return false;
+            if (playbackTarget == null)
+            {
+                Stop();
+                return false;
+            }
             if (animateFade)
             {
                 float alpha = Mathf.LerpUnclamped(fadeFrom, fadeTo, Progress(elapsed, fadeDuration));
@@ -95,12 +107,12 @@ namespace Zeraveene.BetterUGUI
                 }
             }
             if (animateScale)
-                transform.localScale = Vector3.one * Mathf.LerpUnclamped(scaleFrom, scaleTo, Progress(elapsed, scaleDuration));
+                playbackTarget.localScale = Vector3.one * Mathf.LerpUnclamped(scaleFrom, scaleTo, Progress(elapsed, scaleDuration));
             if (animatePosition)
             {
                 Vector2 position = Vector2.LerpUnclamped(positionFrom, positionTo, Progress(elapsed, positionDuration));
-                if (transform is RectTransform rect) rect.anchoredPosition = position;
-                else transform.localPosition = new Vector3(position.x, position.y, transform.localPosition.z);
+                if (playbackTarget is RectTransform rect) rect.anchoredPosition = position;
+                else playbackTarget.localPosition = new Vector3(position.x, position.y, playbackTarget.localPosition.z);
             }
             if (elapsed >= duration) playing = false;
             return playing;

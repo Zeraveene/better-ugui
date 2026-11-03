@@ -3,6 +3,12 @@
 All notable changes to this package are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the package uses [Semantic Versioning](https://semver.org/).
 
+## [4.2.7] - 2026-11-03
+
+### Added
+- UIAnimation Target supports animating another object's scale, position and alpha for entry and exit playback. Empty uses the component's own Transform, and Fade Target can override the alpha destination.
+- Editor preview restores the assigned target's original values when stopped or when settings change. Playback stops safely if its target is destroyed.
+
 ## [4.2.6] - 2026-11-03
 
 ### Added

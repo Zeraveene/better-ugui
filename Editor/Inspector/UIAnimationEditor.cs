@@ -9,6 +9,7 @@ namespace Zeraveene.BetterUGUI.Editor
     {
         private bool fadeOpen = true, scaleOpen = true, positionOpen = true, preview;
         private double started;
+        private Transform previewTarget;
         private Vector3 originalScale, originalLocalPosition;
         private Vector2 originalAnchoredPosition;
         private CanvasGroup group;
@@ -19,14 +20,16 @@ namespace Zeraveene.BetterUGUI.Editor
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("animationTarget"), new GUIContent("Target"));
             DrawChannel("Fade", "fade", ref fadeOpen, DrawFadeTarget);
             DrawChannel("Scale", "scale", ref scaleOpen);
             DrawChannel("Position", "position", ref positionOpen);
+            if (serializedObject.hasModifiedProperties) StopPreview();
             serializedObject.ApplyModifiedProperties();
             var animation = (AnimationComponent)target;
             animation.ResolveFadeTarget(out var fadeGroup, out var fadeGraphic);
             if (serializedObject.FindProperty("fadeEnabled").boolValue && fadeGroup == null && fadeGraphic == null)
-                EditorGUILayout.HelpBox("Fade needs a CanvasGroup or Graphic (ProceduralShape, Image, RawImage) on this GameObject, or an assigned Target.", MessageType.Info);
+                EditorGUILayout.HelpBox("Fade needs a CanvasGroup or Graphic on the animation Target, or an assigned Fade Target.", MessageType.Info);
             EditorGUILayout.LabelField("Easing", "OutQuad");
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -52,7 +55,7 @@ namespace Zeraveene.BetterUGUI.Editor
         {
             var property = serializedObject.FindProperty("fadeTarget");
             EditorGUI.BeginChangeCheck();
-            var value = EditorGUILayout.ObjectField(new GUIContent("Target", property.tooltip), property.objectReferenceValue, typeof(Component), true);
+            var value = EditorGUILayout.ObjectField(new GUIContent("Fade Target", property.tooltip), property.objectReferenceValue, typeof(Component), true);
             if (!EditorGUI.EndChangeCheck()) return;
             if (value is GameObject go) value = go.GetComponent<CanvasGroup>() != null ? go.GetComponent<CanvasGroup>() : go.GetComponent<UnityEngine.UI.Graphic>();
             else if (value is Component c && !(c is CanvasGroup) && !(c is UnityEngine.UI.Graphic))
@@ -83,9 +86,10 @@ namespace Zeraveene.BetterUGUI.Editor
         private void StartPreview(AnimationComponent animation, bool reverse = false)
         {
             StopPreview();
-            originalScale = animation.transform.localScale;
-            originalLocalPosition = animation.transform.localPosition;
-            if (animation.transform is RectTransform rect) originalAnchoredPosition = rect.anchoredPosition;
+            previewTarget = animation.ResolveAnimationTarget();
+            originalScale = previewTarget.localScale;
+            originalLocalPosition = previewTarget.localPosition;
+            if (previewTarget is RectTransform rect) originalAnchoredPosition = rect.anchoredPosition;
             animation.ResolveFadeTarget(out group, out graphic);
             if (group != null) originalAlpha = group.alpha;
             if (graphic != null) originalColor = graphic.color;
@@ -113,12 +117,14 @@ namespace Zeraveene.BetterUGUI.Editor
             preview = false;
             var animation = target as AnimationComponent;
             if (animation != null)
-            {
                 animation.Stop();
-                animation.transform.localScale = originalScale;
-                if (animation.transform is RectTransform rect) rect.anchoredPosition = originalAnchoredPosition;
-                else animation.transform.localPosition = originalLocalPosition;
+            if (previewTarget != null)
+            {
+                previewTarget.localScale = originalScale;
+                if (previewTarget is RectTransform rect) rect.anchoredPosition = originalAnchoredPosition;
+                else previewTarget.localPosition = originalLocalPosition;
             }
+            previewTarget = null;
             if (group != null) group.alpha = originalAlpha;
             if (graphic != null) graphic.color = originalColor;
             SceneView.RepaintAll();
