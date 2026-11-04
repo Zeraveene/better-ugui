@@ -16,7 +16,7 @@ Reusable extensions for Unity uGUI by Zeraveene.
 In Unity, open **Window > Package Manager > + > Install package from git URL** and enter:
 
 ```text
-https://github.com/zeraveene/better-ugui.git#v0.1.2
+https://github.com/zeraveene/better-ugui.git#v0.1.3
 ```
 
 Requires Unity 6000.0+ and uGUI 2.0.0. Private repository access requires Git authentication on each machine. Commit your project's `Packages/manifest.json` and `Packages/packages-lock.json` so other machines can restore the same package version.

@@ -13,7 +13,7 @@ public enum UIGradientSource
 [ExecuteAlways]
 [DisallowMultipleComponent]
 [RequireComponent(typeof(RectTransform))]
-[RequireComponent(typeof(Graphic))]
+[RequireComponent(typeof(CanvasRenderer))]
 [AddComponentMenu("UI/Effects/UI Gradient")]
 [MovedFrom(true, sourceAssembly: "MaxsusWorks.ProceduralUI")]
 public sealed class UIGradientEffect : BaseMeshEffect
@@ -153,6 +153,13 @@ public sealed class UIGradientEffect : BaseMeshEffect
     #endregion
 
     #region Override
+    protected override void Awake()
+    {
+        if (GetComponent<UnityEngine.UI.Graphic>() == null)
+            gameObject.AddComponent<ProceduralShape>();
+        base.Awake();
+    }
+
     public override void ModifyMesh(VertexHelper vertexHelper)
     {
         if (!IsActive() || vertexHelper == null || _tmpText != null)
@@ -219,6 +226,13 @@ public sealed class UIGradientEffect : BaseMeshEffect
 
     #region Editor
 #if UNITY_EDITOR
+    protected override void Reset()
+    {
+        if (GetComponent<UnityEngine.UI.Graphic>() == null)
+            gameObject.AddComponent<ProceduralShape>();
+        base.Reset();
+    }
+
     protected override void OnValidate()
     {
         base.OnValidate();

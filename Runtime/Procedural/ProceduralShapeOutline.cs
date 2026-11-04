@@ -29,7 +29,7 @@ public sealed class ProceduralShapeOutline : MaskableGraphic
     [Tooltip("Canvas Units scales with the UI like ProceduralImage. Screen Pixels keeps an absolute on-screen size.")]
     private ProceduralShapeMeasurementMode _measurementMode;
     [SerializeField] private bool _followSourceFalloff;
-    [SerializeField, Min(0f), HideIf(nameof(_followSourceFalloff))] private float _falloffDistance;
+    [SerializeField, Min(0f), HideIf(nameof(_followSourceFalloff))] private float _falloffDistance = 0.5f;
     [SerializeField] private bool _followSourceDashes;
 
     #endregion

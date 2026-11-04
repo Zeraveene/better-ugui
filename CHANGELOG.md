@@ -3,6 +3,15 @@
 All notable changes to this package are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the package uses [Semantic Versioning](https://semver.org/).
 
+## [0.1.3] - 2026-11-04
+
+### Changed
+- Adding UIGradient to an object without a Graphic creates a ProceduralShape and CanvasRenderer. Existing graphics keep their type.
+- New procedural outlines default to 0.5 falloff, including outlines created through Add Outline.
+
+### Fixed
+- UIAnimation inspector previews hand off shared targets before capturing their original values, preventing competing previews and stale restores when alternating forward/reverse playback between inspectors.
+
 ## [0.1.2] - 2026-11-03
 
 ### Added

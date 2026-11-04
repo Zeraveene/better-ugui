@@ -258,6 +258,57 @@ namespace Zeraveene.BetterUGUI.Tests
             Assert.IsFalse(animation.Play());
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void InspectorPreviewsHandOffSharedTargetsBeforeCapturingValues(bool reverse)
+        {
+            var first = Create(typeof(RectTransform), typeof(CanvasGroup));
+            var secondObject = new GameObject("Second Animation");
+            secondObject.transform.SetParent(go.transform, false);
+            var second = secondObject.AddComponent<AnimationComponent>();
+            foreach (var animation in new[] { first, second })
+                Set(animation, so =>
+                {
+                    so.FindProperty("fadeTarget").objectReferenceValue = go.GetComponent<CanvasGroup>();
+                    so.FindProperty("scaleEnabled").boolValue = true;
+                    so.FindProperty("scaleTarget").objectReferenceValue = go.transform;
+                    so.FindProperty("scaleFrom").floatValue = 0f;
+                    so.FindProperty("scaleTo").floatValue = 1f;
+                });
+
+            go.transform.localScale = Vector3.one * 2f;
+            go.GetComponent<CanvasGroup>().alpha = 0.4f;
+            var firstEditor = UnityEditor.Editor.CreateEditor(first);
+            var secondEditor = UnityEditor.Editor.CreateEditor(second);
+            const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var start = firstEditor.GetType().GetMethod("StartPreview", flags);
+            var stop = firstEditor.GetType().GetMethod("StopPreview", flags);
+            try
+            {
+                // Alternate repeatedly, including after a preview has finished but still owns a snapshot.
+                for (int i = 0; i < 4; i++)
+                {
+                    start.Invoke(firstEditor, new object[] { first, reverse });
+                    Assert.IsTrue(first.EvaluatePreview(0.15f));
+                    start.Invoke(secondEditor, new object[] { second, !reverse });
+                    Assert.IsFalse(first.EvaluatePreview(0.2f), "The previous preview must stop writing to the shared target.");
+                    Assert.IsTrue(second.EvaluatePreview(0.15f));
+                    Assert.IsFalse(second.EvaluatePreview(1f));
+                    stop.Invoke(firstEditor, null);
+                    Assert.AreEqual(reverse ? Vector3.one : Vector3.zero, go.transform.localScale,
+                        "Stopping an old inspector must not restore over the current preview.");
+                    stop.Invoke(secondEditor, null);
+                    Assert.AreEqual(Vector3.one * 2f, go.transform.localScale);
+                    Assert.AreEqual(0.4f, go.GetComponent<CanvasGroup>().alpha, 1e-4f);
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(firstEditor);
+                Object.DestroyImmediate(secondEditor);
+            }
+        }
+
         [TestCase(UIPulseMode.Scale, false)]
         [TestCase(UIPulseMode.Scale, true)]
         [TestCase(UIPulseMode.Alpha, false)]

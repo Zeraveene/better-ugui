@@ -22,6 +22,8 @@ namespace Zeraveene.BetterUGUI.Tests
                 var outlineObject = new GameObject("Outline", typeof(RectTransform), typeof(ProceduralShapeOutline));
                 outlineObject.transform.SetParent(childOfSource ? source.transform : canvasObject.transform, false);
                 var outline = outlineObject.GetComponent<ProceduralShapeOutline>();
+                // This test measures the source edge independently of anti-aliasing falloff.
+                outline.FalloffDistance = 0f;
                 outline.Source = source;
                 Canvas.ForceUpdateCanvases();
 

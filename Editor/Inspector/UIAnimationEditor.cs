@@ -9,6 +9,7 @@ namespace Zeraveene.BetterUGUI.Editor
     [CustomEditor(typeof(AnimationComponent))]
     public sealed class UIAnimationEditor : UnityEditor.Editor
     {
+        private static UIAnimationEditor activePreview;
         private bool preview;
         private double started;
         private Transform previewScaleTarget, previewPositionTarget;
@@ -161,7 +162,10 @@ namespace Zeraveene.BetterUGUI.Editor
 
         private void StartPreview(AnimationComponent animation, bool reverse = false)
         {
+            // Restore the previous preview before capturing shared targets for this one.
+            if (activePreview != null) activePreview.StopPreview();
             StopPreview();
+            serializedObject.ApplyModifiedProperties();
             previewScaleTarget = animation.ResolveScaleTarget();
             previewPositionTarget = animation.ResolvePositionTarget();
             previewSizeTarget = serializedObject.FindProperty("sizeEnabled").boolValue ? animation.ResolveSizeTarget() : null;
@@ -173,6 +177,7 @@ namespace Zeraveene.BetterUGUI.Editor
             if (group != null) originalAlpha = group.alpha;
             if (graphic != null) originalColor = graphic.color;
             preview = true;
+            activePreview = this;
             started = EditorApplication.timeSinceStartup;
             if (reverse) animation.PlayReverse();
             else animation.Play();
@@ -192,6 +197,7 @@ namespace Zeraveene.BetterUGUI.Editor
         private void StopPreview()
         {
             EditorApplication.update -= UpdatePreview;
+            if (activePreview == this) activePreview = null;
             if (!preview) return;
             preview = false;
             var animation = target as AnimationComponent;
