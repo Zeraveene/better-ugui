@@ -441,11 +441,16 @@ namespace Zeraveene.Shared.Inspector
 
         private bool IsVisible(MemberNode node)
         {
+            return targets.Any(item => IsVisible(node, item));
+        }
+
+        private bool IsVisible(MemberNode node, Object item)
+        {
             foreach (ConditionAttribute condition in node.Conditions)
             {
-                if (condition is ShowIfAttribute && EvaluateCondition(condition.MemberName) == false)
+                if (condition is ShowIfAttribute && EvaluateCondition(condition.MemberName, item) == false)
                     return false;
-                if (condition is HideIfAttribute && EvaluateCondition(condition.MemberName) == true)
+                if (condition is HideIfAttribute && EvaluateCondition(condition.MemberName, item) == true)
                     return false;
             }
             return true;
@@ -453,11 +458,16 @@ namespace Zeraveene.Shared.Inspector
 
         private bool IsEnabled(MemberNode node)
         {
+            return targets.All(item => IsEnabled(node, item));
+        }
+
+        private bool IsEnabled(MemberNode node, Object item)
+        {
             foreach (ConditionAttribute condition in node.Conditions)
             {
-                if (condition is EnableIfAttribute && EvaluateCondition(condition.MemberName) == false)
+                if (condition is EnableIfAttribute && EvaluateCondition(condition.MemberName, item) == false)
                     return false;
-                if (condition is DisableIfAttribute && EvaluateCondition(condition.MemberName) == true)
+                if (condition is DisableIfAttribute && EvaluateCondition(condition.MemberName, item) == true)
                     return false;
             }
             return true;
@@ -466,7 +476,13 @@ namespace Zeraveene.Shared.Inspector
         // Returns null when the member cannot be resolved, so the condition is ignored.
         private bool? EvaluateCondition(string memberName)
         {
-            Type type = target.GetType();
+            bool? value = EvaluateCondition(memberName, target);
+            return targets.All(item => EvaluateCondition(memberName, item) == value) ? value : null;
+        }
+
+        private bool? EvaluateCondition(string memberName, Object item)
+        {
+            Type type = item.GetType();
             MemberInfo member = FindMember(type, memberName);
             if (member == null)
             {
@@ -477,7 +493,7 @@ namespace Zeraveene.Shared.Inspector
 
             try
             {
-                object instance = IsStatic(member) ? null : target;
+                object instance = IsStatic(member) ? null : item;
                 switch (member)
                 {
                     case FieldInfo field: return ToBool(field.GetValue(instance));
