@@ -2,25 +2,64 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
 using AnimationComponent = Zeraveene.BetterUGUI.UIAnimation;
 
 namespace Zeraveene.BetterUGUI.Editor
 {
     [CustomEditor(typeof(AnimationComponent))]
+    [CanEditMultipleObjects]
     public sealed class UIAnimationEditor : UnityEditor.Editor
     {
         private static UIAnimationEditor activePreview;
         private bool preview;
         private double started;
-        private Transform previewScaleTarget, previewPositionTarget;
-        private RectTransform previewSizeTarget;
-        private Vector2 originalSizeDelta;
-        private Vector3 originalScale, originalLocalPosition;
-        private Vector2 originalAnchoredPosition;
-        private CanvasGroup group;
-        private UnityEngine.UI.Graphic graphic;
-        private float originalAlpha;
-        private Color originalColor;
+        private readonly List<PreviewSnapshot> snapshots = new List<PreviewSnapshot>();
+
+        private sealed class PreviewSnapshot
+        {
+            internal readonly AnimationComponent Animation;
+            private readonly Transform previewScaleTarget, previewPositionTarget;
+            private RectTransform previewSizeTarget;
+            private Vector2 originalSizeDelta;
+            private Vector3 originalScale, originalLocalPosition;
+            private Vector2 originalAnchoredPosition;
+            private CanvasGroup group;
+            private UnityEngine.UI.Graphic graphic;
+            private float originalAlpha;
+            private Color originalColor;
+
+            internal PreviewSnapshot(AnimationComponent animation)
+            {
+                Animation = animation;
+                previewScaleTarget = animation.ResolveScaleTarget();
+                previewPositionTarget = animation.ResolvePositionTarget();
+                var settings = new SerializedObject(animation);
+                previewSizeTarget = settings.FindProperty("sizeEnabled").boolValue ? animation.ResolveSizeTarget() : null;
+                if (previewSizeTarget != null) originalSizeDelta = previewSizeTarget.sizeDelta;
+                originalScale = previewScaleTarget.localScale;
+                originalLocalPosition = previewPositionTarget.localPosition;
+                if (previewPositionTarget is RectTransform rect) originalAnchoredPosition = rect.anchoredPosition;
+                animation.ResolveFadeTarget(out group, out graphic);
+                if (group != null) originalAlpha = group.alpha;
+                if (graphic != null) originalColor = graphic.color;
+            }
+
+            internal void Restore()
+            {
+                if (Animation != null) Animation.Stop();
+                if (previewScaleTarget != null) previewScaleTarget.localScale = originalScale;
+                if (previewSizeTarget != null) previewSizeTarget.sizeDelta = originalSizeDelta;
+                if (previewPositionTarget != null)
+                {
+                    if (previewPositionTarget is RectTransform rect) rect.anchoredPosition = originalAnchoredPosition;
+                    else previewPositionTarget.localPosition = originalLocalPosition;
+                }
+                if (group != null) group.alpha = originalAlpha;
+                if (graphic != null) graphic.color = originalColor;
+            }
+        }
 
         public override VisualElement CreateInspectorGUI()
         {
@@ -54,8 +93,8 @@ namespace Zeraveene.BetterUGUI.Editor
             var axesProperty = serializedObject.FindProperty("separateScaleAxes");
             void UpdateScaleFields(SerializedProperty property)
             {
-                uniformScale.EnableInClassList("hidden", property.boolValue);
-                xyzScale.EnableInClassList("hidden", !property.boolValue);
+                uniformScale.EnableInClassList("hidden", !property.hasMultipleDifferentValues && property.boolValue);
+                xyzScale.EnableInClassList("hidden", !property.hasMultipleDifferentValues && !property.boolValue);
             }
             UpdateScaleFields(axesProperty);
             root.TrackPropertyValue(axesProperty, UpdateScaleFields);
@@ -83,17 +122,23 @@ namespace Zeraveene.BetterUGUI.Editor
             controls.Add(new Button(() => Play(true)) { text = "Play Reverse" });
             controls.Add(new Button(() =>
             {
-                if (Application.isPlaying) ((AnimationComponent)target).Stop();
+                if (Application.isPlaying)
+                    foreach (AnimationComponent animation in targets) animation.Stop();
                 else StopPreview();
             }) { text = "Stop" });
             root.Add(controls);
 
             void RefreshWarning()
             {
-                var animation = (AnimationComponent)target;
-                animation.ResolveFadeTarget(out var fadeGroup, out var fadeGraphic);
-                warning.EnableInClassList("hidden", fadeGroup != null || fadeGraphic != null);
-                sizeWarning.EnableInClassList("hidden", animation.ResolveSizeTarget() != null);
+                bool fadeValid = true, sizeValid = true;
+                foreach (AnimationComponent animation in targets)
+                {
+                    animation.ResolveFadeTarget(out var fadeGroup, out var fadeGraphic);
+                    fadeValid &= fadeGroup != null || fadeGraphic != null;
+                    sizeValid &= animation.ResolveSizeTarget() != null;
+                }
+                warning.EnableInClassList("hidden", fadeValid);
+                sizeWarning.EnableInClassList("hidden", sizeValid);
             }
             RefreshWarning();
             root.TrackSerializedObjectValue(serializedObject, _ =>
@@ -128,13 +173,13 @@ namespace Zeraveene.BetterUGUI.Editor
             var content = new VisualElement();
             content.AddToClassList("channel-content");
             content.EnableInClassList("hidden", !foldout.value);
-            content.SetEnabled(enabledProperty.boolValue);
+            content.SetEnabled(enabledProperty.hasMultipleDifferentValues || enabledProperty.boolValue);
             foldout.RegisterValueChangedCallback(evt =>
             {
                 content.EnableInClassList("hidden", !evt.newValue);
                 SessionState.SetBool(stateKey, evt.newValue);
             });
-            content.TrackPropertyValue(enabledProperty, property => content.SetEnabled(property.boolValue));
+            content.TrackPropertyValue(enabledProperty, property => content.SetEnabled(property.hasMultipleDifferentValues || property.boolValue));
             box.Add(content);
             root.Add(box);
             return content;
@@ -147,48 +192,57 @@ namespace Zeraveene.BetterUGUI.Editor
             values.Add(Field(prefix + "From", "From " + label));
             values.Add(Field(prefix + "To", "To " + label));
             var enabled = serializedObject.FindProperty(prefix + "Enabled");
-            values.SetEnabled(enabled.boolValue);
-            values.TrackPropertyValue(enabled, property => values.SetEnabled(property.boolValue));
+            values.SetEnabled(enabled.hasMultipleDifferentValues || enabled.boolValue);
+            values.TrackPropertyValue(enabled, property => values.SetEnabled(property.hasMultipleDifferentValues || property.boolValue));
             parent.Add(values);
         }
 
         private void Play(bool reverse)
         {
-            var animation = (AnimationComponent)target;
-            if (!Application.isPlaying) StartPreview(animation, reverse);
-            else if (reverse) animation.PlayReverse();
-            else animation.Play();
+            if (!Application.isPlaying) StartPreviews(targets.Cast<AnimationComponent>().ToArray(), reverse);
+            else
+            {
+                serializedObject.ApplyModifiedProperties();
+                foreach (AnimationComponent animation in targets)
+                    if (reverse) animation.PlayReverse();
+                    else animation.Play();
+            }
         }
 
         private void StartPreview(AnimationComponent animation, bool reverse = false)
+            => StartPreviews(new[] { animation }, reverse);
+
+        private void StartPreviews(AnimationComponent[] animations, bool reverse)
         {
             // Restore the previous preview before capturing shared targets for this one.
             if (activePreview != null) activePreview.StopPreview();
             StopPreview();
             serializedObject.ApplyModifiedProperties();
-            previewScaleTarget = animation.ResolveScaleTarget();
-            previewPositionTarget = animation.ResolvePositionTarget();
-            previewSizeTarget = serializedObject.FindProperty("sizeEnabled").boolValue ? animation.ResolveSizeTarget() : null;
-            if (previewSizeTarget != null) originalSizeDelta = previewSizeTarget.sizeDelta;
-            originalScale = previewScaleTarget.localScale;
-            originalLocalPosition = previewPositionTarget.localPosition;
-            if (previewPositionTarget is RectTransform rect) originalAnchoredPosition = rect.anchoredPosition;
-            animation.ResolveFadeTarget(out group, out graphic);
-            if (group != null) originalAlpha = group.alpha;
-            if (graphic != null) originalColor = graphic.color;
+            // Capture the entire selection before playback changes any shared target.
+            foreach (AnimationComponent animation in animations)
+                if (animation != null && animation.isActiveAndEnabled)
+                    snapshots.Add(new PreviewSnapshot(animation));
             preview = true;
             activePreview = this;
             started = EditorApplication.timeSinceStartup;
-            if (reverse) animation.PlayReverse();
-            else animation.Play();
+            foreach (PreviewSnapshot snapshot in snapshots)
+                if (reverse) snapshot.Animation.PlayReverse();
+                else snapshot.Animation.Play();
             EditorApplication.update += UpdatePreview;
         }
 
         private void UpdatePreview()
         {
-            var animation = target as AnimationComponent;
-            if (animation == null || !animation.isActiveAndEnabled) { StopPreview(); return; }
-            if (!animation.EvaluatePreview((float)(EditorApplication.timeSinceStartup - started)))
+            bool running = false;
+            float elapsed = (float)(EditorApplication.timeSinceStartup - started);
+            foreach (PreviewSnapshot snapshot in snapshots)
+            {
+                AnimationComponent animation = snapshot.Animation;
+                if (animation == null) continue;
+                if (!animation.isActiveAndEnabled) { animation.Stop(); continue; }
+                running |= animation.EvaluatePreview(elapsed);
+            }
+            if (!running)
                 EditorApplication.update -= UpdatePreview;
             SceneView.RepaintAll();
             EditorApplication.QueuePlayerLoopUpdate();
@@ -200,21 +254,8 @@ namespace Zeraveene.BetterUGUI.Editor
             if (activePreview == this) activePreview = null;
             if (!preview) return;
             preview = false;
-            var animation = target as AnimationComponent;
-            if (animation != null)
-                animation.Stop();
-            if (previewScaleTarget != null) previewScaleTarget.localScale = originalScale;
-            if (previewSizeTarget != null) previewSizeTarget.sizeDelta = originalSizeDelta;
-            if (previewPositionTarget != null)
-            {
-                if (previewPositionTarget is RectTransform rect) rect.anchoredPosition = originalAnchoredPosition;
-                else previewPositionTarget.localPosition = originalLocalPosition;
-            }
-            previewScaleTarget = null;
-            previewPositionTarget = null;
-            previewSizeTarget = null;
-            if (group != null) group.alpha = originalAlpha;
-            if (graphic != null) graphic.color = originalColor;
+            foreach (PreviewSnapshot snapshot in snapshots) snapshot.Restore();
+            snapshots.Clear();
             SceneView.RepaintAll();
             EditorApplication.QueuePlayerLoopUpdate();
         }

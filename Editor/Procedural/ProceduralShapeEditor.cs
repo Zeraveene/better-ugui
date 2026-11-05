@@ -6,6 +6,34 @@ using UnityEngine;
 [CanEditMultipleObjects]
 public sealed class ProceduralShapeEditor : InspectorAttributeEditor
 {
+    private void OnSceneGUI()
+    {
+        SceneView sceneView = SceneView.currentDrawingSceneView;
+        if (sceneView == null || !sceneView.drawGizmos) return;
+
+        foreach (Object item in targets)
+        {
+            var shape = item as ProceduralShape;
+            if (shape == null || !shape.raycastTarget || !EditorGUIUtility.IsGizmosAllowedForObject(shape)) continue;
+
+            RectTransform rectTransform = shape.rectTransform;
+            Rect rect = rectTransform.rect;
+            // uGUI padding is Left, Bottom, Right, Top. Positive values inset the hit area.
+            Vector4 padding = shape.raycastPadding;
+            Vector3 bottomLeft = rectTransform.TransformPoint(new Vector3(rect.xMin + padding.x, rect.yMin + padding.y));
+            Vector3 topLeft = rectTransform.TransformPoint(new Vector3(rect.xMin + padding.x, rect.yMax - padding.w));
+            Vector3 topRight = rectTransform.TransformPoint(new Vector3(rect.xMax - padding.z, rect.yMax - padding.w));
+            Vector3 bottomRight = rectTransform.TransformPoint(new Vector3(rect.xMax - padding.z, rect.yMin + padding.y));
+            using (new Handles.DrawingScope(Handles.UIColliderHandleColor))
+            {
+                Handles.DrawLine(bottomLeft, topLeft);
+                Handles.DrawLine(topLeft, topRight);
+                Handles.DrawLine(topRight, bottomRight);
+                Handles.DrawLine(bottomRight, bottomLeft);
+            }
+        }
+    }
+
     public override void OnInspectorGUI()
     {
         base.OnInspectorGUI();

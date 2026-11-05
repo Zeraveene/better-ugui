@@ -309,6 +309,68 @@ namespace Zeraveene.BetterUGUI.Tests
             }
         }
 
+        [TestCase(typeof(UIAnimation), false, false)]
+        [TestCase(typeof(UIAnimation), true, false)]
+        [TestCase(typeof(UIAnimation), false, true)]
+        [TestCase(typeof(UIAnimation), true, true)]
+        [TestCase(typeof(UIPulse), false, false)]
+        [TestCase(typeof(UIPulse), true, false)]
+        public void MultiObjectInspectorPlaysSelectionAndRestoresOriginalValues(System.Type componentType, bool reverse, bool sharedTarget)
+        {
+            go = new GameObject("Batch preview", typeof(RectTransform));
+            var other = new GameObject("Second preview", typeof(RectTransform));
+            other.transform.SetParent(go.transform, false);
+            Component first = go.AddComponent(componentType);
+            Component second = other.AddComponent(componentType);
+            foreach (Component component in new[] { first, second })
+            {
+                var settings = new SerializedObject(component);
+                if (component is AnimationComponent)
+                {
+                    settings.FindProperty("fadeEnabled").boolValue = false;
+                    settings.FindProperty("scaleEnabled").boolValue = true;
+                    settings.FindProperty("scaleFrom").floatValue = 1f;
+                    settings.FindProperty("scaleTo").floatValue = 2f;
+                    if (sharedTarget) settings.FindProperty("scaleTarget").objectReferenceValue = go.transform;
+                }
+                else
+                {
+                    settings.FindProperty("mode").enumValueIndex = (int)UIPulseMode.Scale;
+                    settings.FindProperty("from").floatValue = 1f;
+                    settings.FindProperty("to").floatValue = 2f;
+                }
+                settings.ApplyModifiedPropertiesWithoutUndo();
+            }
+            go.transform.localScale = Vector3.one * 3f;
+            other.transform.localScale = Vector3.one * 4f;
+            var editor = UnityEditor.Editor.CreateEditor(new Object[] { first, second });
+            const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            try
+            {
+                Assert.IsTrue(System.Attribute.IsDefined(editor.GetType(), typeof(CanEditMultipleObjects)));
+                editor.GetType().GetMethod("Play", flags).Invoke(editor, new object[] { reverse });
+                Assert.AreEqual(Vector3.one * (reverse ? 2f : 1f), go.transform.localScale);
+                Assert.AreEqual(Vector3.one * (sharedTarget ? 4f : reverse ? 2f : 1f), other.transform.localScale);
+
+                // A disabled component must not prevent the rest of the batch from advancing.
+                ((Behaviour)first).enabled = false;
+                editor.GetType().GetField("started", flags).SetValue(editor, EditorApplication.timeSinceStartup - 0.15);
+                editor.GetType().GetMethod("UpdatePreview", flags).Invoke(editor, null);
+                Transform animated = sharedTarget ? go.transform : other.transform;
+                Assert.That(animated.localScale.x, Is.GreaterThan(1f).And.LessThan(2f));
+
+                editor.GetType().GetMethod("StopPreview", flags).Invoke(editor, null);
+                Assert.AreEqual(Vector3.one * 3f, go.transform.localScale);
+                Assert.AreEqual(Vector3.one * 4f, other.transform.localScale);
+                Assert.IsFalse(first is AnimationComponent a ? a.Stop() : ((UIPulse)first).Stop());
+                Assert.IsFalse(second is AnimationComponent b ? b.Stop() : ((UIPulse)second).Stop());
+            }
+            finally
+            {
+                Object.DestroyImmediate(editor);
+            }
+        }
+
         [TestCase(UIPulseMode.Scale, false)]
         [TestCase(UIPulseMode.Scale, true)]
         [TestCase(UIPulseMode.Alpha, false)]

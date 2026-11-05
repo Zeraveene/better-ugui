@@ -3,6 +3,14 @@
 All notable changes to this package are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the package uses [Semantic Versioning](https://semver.org/).
 
+## [0.1.5] - 2026-11-05
+
+### Added
+- Selected ProceduralShapes display their padded rectangular raycast area in the Scene view, including multi-object selections. The preview respects Raycast Target and Scene view gizmo visibility.
+- UIAnimation and UIPulse support multi-object inspector editing and Play, Play Reverse, and Stop across all selected components in edit mode and Play Mode.
+- Batch previews capture original values before starting any selected animation, restore the entire selection on Stop, and continue when another selected component is disabled or removed.
+- UIAnimation shows editable channel controls and scale-axis fields for mixed selections, with target warnings checked across all selected components.
+
 ## [0.1.4] - 2026-11-04
 
 ### Added
