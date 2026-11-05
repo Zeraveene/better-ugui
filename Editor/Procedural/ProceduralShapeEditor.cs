@@ -14,7 +14,7 @@ public sealed class ProceduralShapeEditor : InspectorAttributeEditor
         foreach (Object item in targets)
         {
             var shape = item as ProceduralShape;
-            if (shape == null || !shape.raycastTarget || !EditorGUIUtility.IsGizmosAllowedForObject(shape)) continue;
+            if (shape == null || !shape.raycastTarget) continue;
 
             RectTransform rectTransform = shape.rectTransform;
             Rect rect = rectTransform.rect;
@@ -24,7 +24,7 @@ public sealed class ProceduralShapeEditor : InspectorAttributeEditor
             Vector3 topLeft = rectTransform.TransformPoint(new Vector3(rect.xMin + padding.x, rect.yMax - padding.w));
             Vector3 topRight = rectTransform.TransformPoint(new Vector3(rect.xMax - padding.z, rect.yMax - padding.w));
             Vector3 bottomRight = rectTransform.TransformPoint(new Vector3(rect.xMax - padding.z, rect.yMin + padding.y));
-            using (new Handles.DrawingScope(Handles.UIColliderHandleColor))
+            using (new Handles.DrawingScope(Handles.selectedColor))
             {
                 Handles.DrawLine(bottomLeft, topLeft);
                 Handles.DrawLine(topLeft, topRight);

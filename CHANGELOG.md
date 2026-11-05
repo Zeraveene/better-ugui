@@ -3,6 +3,11 @@
 All notable changes to this package are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the package uses [Semantic Versioning](https://semver.org/).
 
+## [0.1.6] - 2026-11-05
+
+### Fixed
+- ProceduralShape raycast-padding preview no longer calls EditorGUIUtility.IsGizmosAllowedForObject, which is unavailable in some supported Unity versions. The preview uses Handles.selectedColor and continues to respect Raycast Target and the Scene view Gizmos toggle.
+
 ## [0.1.5] - 2026-11-05
 
 ### Added
