@@ -26,6 +26,88 @@ namespace Zeraveene.BetterUGUI.Tests
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
+        [TestCase(Animation.UIEase.OutQuad, 0.25f)]
+        [TestCase(Animation.UIEase.Linear, 0.5f)]
+        [TestCase(Animation.UIEase.InQuad, 0.75f)]
+        [TestCase(Animation.UIEase.Custom, 0.875f)]
+        public void SelectedEasingControlsChannelProgress(Animation.UIEase ease, float expectedAlpha)
+        {
+            var animation = Create(typeof(CanvasGroup));
+            Set(animation, so =>
+            {
+                so.FindProperty("ease").intValue = (int)ease;
+                so.FindProperty("customEase").animationCurveValue = AnimationCurve.Linear(0f, 0f, 1f, 0.25f);
+                so.FindProperty("fadeDuration").floatValue = 1f;
+            });
+            animation.Play();
+            Assert.IsTrue(animation.EvaluatePreview(0.5f));
+            Assert.AreEqual(expectedAlpha, go.GetComponent<CanvasGroup>().alpha, 1e-4f);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void RepeatWaitsForLongestChannelThenIntervalAndPreservesDirection(bool reverse)
+        {
+            var animation = Create(typeof(RectTransform), typeof(CanvasGroup));
+            Set(animation, so =>
+            {
+                so.FindProperty("ease").intValue = (int)Animation.UIEase.Linear;
+                so.FindProperty("fadeDuration").floatValue = 0.5f;
+                so.FindProperty("scaleEnabled").boolValue = true;
+                so.FindProperty("scaleDuration").floatValue = 1f;
+                so.FindProperty("scaleFrom").floatValue = 1f;
+                so.FindProperty("scaleTo").floatValue = 2f;
+                so.FindProperty("repeat").boolValue = true;
+                so.FindProperty("repeatInterval").floatValue = 0.5f;
+            });
+            Assert.IsTrue(reverse ? animation.PlayReverse() : animation.Play());
+            foreach (float time in new[] { 1f, 1.25f, 1.49f })
+            {
+                Assert.IsTrue(animation.EvaluatePreview(time));
+                Assert.AreEqual(reverse ? 1f : 0f, go.GetComponent<CanvasGroup>().alpha, 1e-4f);
+                Assert.AreEqual(reverse ? 1f : 2f, go.transform.localScale.x, 1e-4f);
+            }
+            Assert.IsTrue(animation.EvaluatePreview(1.5f));
+            Assert.AreEqual(reverse ? 0f : 1f, go.GetComponent<CanvasGroup>().alpha, 1e-4f);
+            Assert.AreEqual(reverse ? 2f : 1f, go.transform.localScale.x, 1e-4f);
+            Assert.IsTrue(animation.EvaluatePreview(1.75f));
+            Assert.AreEqual(0.5f, go.GetComponent<CanvasGroup>().alpha, 1e-4f);
+            Assert.AreEqual(reverse ? 1.75f : 1.25f, go.transform.localScale.x, 1e-4f);
+            Assert.IsTrue(animation.Stop());
+            Assert.IsFalse(animation.EvaluatePreview(3f));
+        }
+
+        [TestCase(0f, 0f)]
+        [TestCase(0f, 0.5f)]
+        [TestCase(1f, 0f)]
+        public void RepeatingInstantAnimationsAndZeroIntervalRemainFinite(float duration, float interval)
+        {
+            var animation = Create(typeof(CanvasGroup));
+            Set(animation, so =>
+            {
+                so.FindProperty("fadeDuration").floatValue = duration;
+                so.FindProperty("repeat").boolValue = true;
+                so.FindProperty("repeatInterval").floatValue = interval;
+            });
+            Assert.IsTrue(animation.Play());
+            Assert.IsTrue(animation.EvaluatePreview(10f));
+            Assert.AreEqual(duration == 0f ? 0f : 1f, go.GetComponent<CanvasGroup>().alpha, 1e-4f);
+            animation.enabled = false;
+            Assert.IsFalse(animation.EvaluatePreview(11f));
+            Assert.IsFalse(animation.Stop());
+        }
+
+        [Test]
+        public void AlwaysPlayDoesNotAutomaticallyAnimateInEditMode()
+        {
+            var animation = Create(typeof(CanvasGroup));
+            Set(animation, so => so.FindProperty("alwaysPlay").boolValue = true);
+            animation.enabled = false;
+            animation.enabled = true;
+            Assert.IsFalse(animation.Stop());
+            Assert.AreEqual(1f, go.GetComponent<CanvasGroup>().alpha);
+        }
+
         [TestCase(typeof(Image))]
         [TestCase(typeof(RawImage))]
         [TestCase(typeof(ProceduralShape))]

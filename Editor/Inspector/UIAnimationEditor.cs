@@ -113,9 +113,24 @@ namespace Zeraveene.BetterUGUI.Editor
             var sizeWarning = new HelpBox("Size needs a RectTransform on Size Target or this GameObject.", HelpBoxMessageType.Info);
             size.Add(sizeWarning);
 
-            var easing = new Label("Easing · OutQuad");
-            easing.AddToClassList("animation-hint");
-            root.Add(easing);
+            var settings = AddChannel(root, "Settings", "settings", false);
+            settings.Add(Field("ease", "Easing"));
+            var curve = Field("customEase", "Custom Curve");
+            settings.Add(curve);
+            var easeProperty = serializedObject.FindProperty("ease");
+            void UpdateCurve(SerializedProperty property)
+                => curve.EnableInClassList("hidden", !property.hasMultipleDifferentValues
+                    && property.intValue != (int)Animation.UIEase.Custom);
+            UpdateCurve(easeProperty);
+            root.TrackPropertyValue(easeProperty, UpdateCurve);
+            settings.Add(Field("repeat", "Repeat"));
+            var interval = Field("repeatInterval", "Repeat Interval (s)");
+            settings.Add(interval);
+            var repeatProperty = serializedObject.FindProperty("repeat");
+            interval.SetEnabled(repeatProperty.hasMultipleDifferentValues || repeatProperty.boolValue);
+            root.TrackPropertyValue(repeatProperty,
+                property => interval.SetEnabled(property.hasMultipleDifferentValues || property.boolValue));
+            settings.Add(Field("alwaysPlay", "Always Play"));
             var controls = new VisualElement();
             controls.AddToClassList("playback-controls");
             controls.Add(new Button(() => Play(false)) { text = "Play" });
@@ -155,7 +170,7 @@ namespace Zeraveene.BetterUGUI.Editor
             return new PropertyField(serializedObject.FindProperty(propertyName), label);
         }
 
-        private VisualElement AddChannel(VisualElement root, string label, string prefix)
+        private VisualElement AddChannel(VisualElement root, string label, string prefix, bool hasEnabledToggle = true)
         {
             var box = new Box();
             box.AddToClassList("animation-channel");
@@ -165,21 +180,25 @@ namespace Zeraveene.BetterUGUI.Editor
             var foldout = new Foldout { text = label, value = SessionState.GetBool(stateKey, true) };
             foldout.AddToClassList("channel-foldout");
             header.Add(foldout);
-            var enabledProperty = serializedObject.FindProperty(prefix + "Enabled");
-            var enabled = new Toggle("Enabled") { bindingPath = enabledProperty.propertyPath };
-            enabled.AddToClassList("channel-enabled");
-            header.Add(enabled);
             box.Add(header);
             var content = new VisualElement();
             content.AddToClassList("channel-content");
             content.EnableInClassList("hidden", !foldout.value);
-            content.SetEnabled(enabledProperty.hasMultipleDifferentValues || enabledProperty.boolValue);
+            if (hasEnabledToggle)
+            {
+                var enabledProperty = serializedObject.FindProperty(prefix + "Enabled");
+                var enabled = new Toggle("Enabled") { bindingPath = enabledProperty.propertyPath };
+                enabled.AddToClassList("channel-enabled");
+                header.Add(enabled);
+                content.SetEnabled(enabledProperty.hasMultipleDifferentValues || enabledProperty.boolValue);
+                content.TrackPropertyValue(enabledProperty,
+                    property => content.SetEnabled(property.hasMultipleDifferentValues || property.boolValue));
+            }
             foldout.RegisterValueChangedCallback(evt =>
             {
                 content.EnableInClassList("hidden", !evt.newValue);
                 SessionState.SetBool(stateKey, evt.newValue);
             });
-            content.TrackPropertyValue(enabledProperty, property => content.SetEnabled(property.hasMultipleDifferentValues || property.boolValue));
             box.Add(content);
             root.Add(box);
             return content;

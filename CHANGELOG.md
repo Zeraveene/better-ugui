@@ -3,6 +3,13 @@
 All notable changes to this package are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the package uses [Semantic Versioning](https://semver.org/).
 
+## [0.1.7] - 2026-11-06
+
+### Added
+- UIAnimation Settings foldout with selectable easing (OutQuad by default), a custom curve, Repeat, Repeat Interval, and Always Play.
+- Repeated playback waits for the longest enabled channel and the configured interval before restarting in the same direction, in Play Mode and editor previews.
+- Always Play starts automatically on enable in Play Mode. Stop and disable cancel repeating playback, including its wait interval.
+
 ## [0.1.6] - 2026-11-05
 
 ### Fixed

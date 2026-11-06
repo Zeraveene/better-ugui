@@ -16,7 +16,7 @@ Reusable extensions for Unity uGUI by Zeraveene.
 In Unity, open **Window > Package Manager > + > Install package from git URL** and enter:
 
 ```text
-https://github.com/zeraveene/better-ugui.git#v0.1.6
+https://github.com/zeraveene/better-ugui.git#v0.1.7
 ```
 
 Requires Unity 6000.0+ and uGUI 2.0.0. Private repository access requires Git authentication on each machine. Commit your project's `Packages/manifest.json` and `Packages/packages-lock.json` so other machines can restore the same package version.
@@ -49,6 +49,8 @@ This repository contains the UPM package at its root; it is not a Unity project.
 ### Simple UI animation
 
 Add **UI > Better uGUI > UI Animation** and assign **Fade Target**, **Scale Target** and **Position Target** inside their respective foldouts. Each channel uses its own target, or the attached object when its target is empty. Fade accepts a CanvasGroup or Graphic, or resolves those components on the assigned object (CanvasGroup takes priority). Enable the channels, set From/To and Duration, then press Play to preview. Defaults are fade 1 → 0, uniform scale 1 → 1.3, 0.3 seconds each and OutQuad easing. Channels play together with independent durations. Shared targets saved by versions 4.2.7 and 4.2.8 are migrated automatically, preserving any explicit Fade Target.
+
+The bottom **Settings** foldout contains **Easing** (OutQuad by default; Custom exposes a curve), **Repeat**, **Repeat Interval (s)**, and **Always Play**. Repeat holds the final values until every enabled channel has finished plus the interval, then restarts in the same direction. An interval of zero restarts immediately. Always Play starts forward whenever the component is enabled in Play Mode; combine it with Repeat for continuous playback. Stop or disabling the component cancels playback, including the interval. Editor previews also support repeat and restore original values when stopped.
 
 For entry and exit, configure From as the hidden state and To as the visible state. Call `Play()` for entry and `PlayReverse()` for exit. Separate UIAnimation components on controller objects can target the same panel when entry and exit need different settings. Activate the panel before entry and keep the controller enabled throughout playback.
 

@@ -45,12 +45,19 @@ namespace Zeraveene.BetterUGUI
         [SerializeField, Min(0f)] private float heightTo = 100f;
         [SerializeField, Min(0f)] private float sizeDuration = 0.3f;
 
+        [SerializeField] private UIEase ease = UIEase.OutQuad;
+        [SerializeField] private AnimationCurve customEase = AnimationCurve.Linear(0f, 0f, 1f, 1f);
+        [SerializeField, Tooltip("Replay after all enabled channels finish and the repeat interval has elapsed.")]
+        private bool repeat;
+        [SerializeField, Min(0f)] private float repeatInterval;
+        [SerializeField, Tooltip("Start automatically whenever this component is enabled in Play Mode. Enable Repeat for continuous playback.")]
+        private bool alwaysPlay;
+
         private CanvasGroup group;
         private Transform playbackScaleTarget, playbackPositionTarget;
         private RectTransform playbackSizeTarget;
         private Graphic graphic;
-        private UIAnimationHandle handle;
-        private float duration;
+        private float duration, elapsed;
         private bool playing, animateFade, animateScale, animatePosition, animateSize;
 
         private bool reverse;
@@ -78,13 +85,9 @@ namespace Zeraveene.BetterUGUI
             duration = Mathf.Max(
                 Mathf.Max(animateFade ? fadeDuration : 0f, animateScale ? scaleDuration : 0f),
                 Mathf.Max(animatePosition ? positionDuration : 0f, animateSize ? sizeDuration : 0f));
+            elapsed = 0f;
             playing = true;
             EvaluatePreview(0f);
-            if (Application.isPlaying && playing)
-                handle = UIAnimationRunner.Play(new Animation.UIAnimation
-                {
-                    Owner = this, Duration = duration, Ease = UIEase.Linear, Receiver = this
-                });
             return true;
         }
 
@@ -92,8 +95,6 @@ namespace Zeraveene.BetterUGUI
         public bool Stop()
         {
             bool wasPlaying = playing;
-            handle.Cancel();
-            handle = default;
             playing = false;
             return wasPlaying;
         }
@@ -145,9 +146,14 @@ namespace Zeraveene.BetterUGUI
                 Stop();
                 return false;
             }
+            if (repeat)
+            {
+                float cycle = Mathf.Max(0f, duration) + Mathf.Max(0f, repeatInterval);
+                elapsed = cycle > 0f ? Mathf.Repeat(Mathf.Max(0f, elapsed), cycle) : 0f;
+            }
             if (animateFade)
             {
-                float alpha = Mathf.LerpUnclamped(fadeFrom, fadeTo, Progress(elapsed, fadeDuration));
+                float alpha = Mathf.Clamp01(Mathf.LerpUnclamped(fadeFrom, fadeTo, Progress(elapsed, fadeDuration)));
                 if (group != null) group.alpha = alpha;
                 else if (graphic != null)
                 {
@@ -178,19 +184,36 @@ namespace Zeraveene.BetterUGUI
                 if (playbackPositionTarget is RectTransform rect) rect.anchoredPosition = position;
                 else playbackPositionTarget.localPosition = new Vector3(position.x, position.y, playbackPositionTarget.localPosition.z);
             }
-            if (elapsed >= duration) playing = false;
+            if (!repeat && elapsed >= duration) playing = false;
             return playing;
         }
 
         private float Progress(float elapsed, float seconds)
         {
             float t = seconds <= 0f ? 1f : Mathf.Clamp01(elapsed / seconds);
-            float eased = 1f - (1f - t) * (1f - t); // OutQuad
+            float eased = UIEasing.Evaluate(ease, t, customEase);
             return reverse ? 1f - eased : eased;
         }
 
         void IUIAnimationReceiver.ApplyAnimation(float progress) => EvaluatePreview(progress * duration);
         void IUIAnimationReceiver.AnimationCompleted() => playing = false;
+        private void Update()
+        {
+            if (!playing) return;
+            elapsed += Time.deltaTime;
+            if (repeat)
+            {
+                float cycle = Mathf.Max(0f, duration) + Mathf.Max(0f, repeatInterval);
+                elapsed = cycle > 0f ? Mathf.Repeat(elapsed, cycle) : 0f;
+            }
+            EvaluatePreview(elapsed);
+        }
+
+        private void OnEnable()
+        {
+            if (Application.isPlaying && alwaysPlay) Play();
+        }
+
         private void OnDisable() => Stop();
 
         private void Reset()
